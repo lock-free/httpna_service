@@ -7,8 +7,11 @@ import (
 	"github.com/idata-shopee/gopcp"
 	"github.com/idata-shopee/gopcp_stream"
 	"github.com/lock-free/httpna_service/mid"
+	"github.com/lock-free/httpna_service/oauth"
 	"github.com/lock-free/httpna_service/session"
 	"github.com/lock-free/obrero"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -35,6 +38,7 @@ type HTTPNAConf struct {
 	SESSION_COOKIE_KEY  string
 	SESSION_SECRECT_KEY string
 	SESSION_PATH        string
+	SESSION_EXPIRE      int
 }
 
 func getUserFromAuthWp(sessionTxt string, naPools obrero.NAPools, authWpName string, authMethod string, timeout time.Duration) (interface{}, error) {
@@ -62,6 +66,7 @@ func main() {
 	}
 
 	pcpClient := gopcp.PcpClient{}
+
 	naPools := obrero.StartWorker(func(*gopcp_stream.StreamServer) *gopcp.Sandbox {
 		return gopcp.GetSandbox(map[string]*gopcp.BoxFunc{
 			"getServiceType": gopcp.ToSandboxFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
@@ -151,10 +156,74 @@ func main() {
 		}
 	})
 
+	err = GoogleOAuthMid(httpNAConf)
+	if err != nil {
+		panic(err)
+	}
+
 	// TODO read port from env
 	port := MustEnvOption("PORT")
 	log.Println("try to start server at " + port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+const GOOGLE_OAUTH_CONFIG_FILE_PATH = "/data/google_oauth.json"
+
+// google login middleware
+func GoogleOAuthMid(httpNAConf HTTPNAConf) error {
+	if Exists(GOOGLE_OAUTH_CONFIG_FILE_PATH) {
+		// read conf
+		var googleOAuthConfig oauth2.Config
+		err := ReadJson(GOOGLE_OAUTH_CONFIG_FILE_PATH, &googleOAuthConfig)
+
+		log.Println("read google oauth config:")
+		log.Println(googleOAuthConfig)
+		googleOAuthConfig.Endpoint = google.Endpoint
+
+		if err != nil {
+			return err
+		}
+
+		http.HandleFunc("/oauth/google/login", func(w http.ResponseWriter, r *http.Request) {
+			oauth.RedirectToGoogleOAuthUrl(&googleOAuthConfig, w, r)
+		})
+
+		http.HandleFunc("/oauth/google/callback", func(w http.ResponseWriter, r *http.Request) {
+			googleUser, err := oauth.GetUserInfoFromGoogle(&googleOAuthConfig, r)
+			if err != nil {
+				w.Write([]byte(err.Error()))
+				return
+			}
+
+			sessionUser := SessionUser{"google", googleUser}
+			value, err := json.Marshal(sessionUser)
+			if err != nil {
+				w.Write([]byte(err.Error()))
+				return
+			}
+
+			err = session.SetSession(w,
+				[]byte(httpNAConf.SESSION_SECRECT_KEY),
+				httpNAConf.SESSION_COOKIE_KEY,
+				string(value),
+				httpNAConf.SESSION_PATH,
+				time.Duration(httpNAConf.SESSION_EXPIRE)*time.Second)
+
+			if err != nil {
+				w.Write([]byte(err.Error()))
+				return
+			}
+
+			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+		})
+	}
+
+	return nil
+}
+
+type SessionUser struct {
+	Source string
+	User   interface{}
 }
 
 func MustEnvOption(envName string) string {
@@ -171,4 +240,13 @@ func ReadJson(filePath string, f interface{}) error {
 		return err
 	}
 	return json.Unmarshal([]byte(source), f)
+}
+
+func Exists(name string) bool {
+	if _, err := os.Stat(name); err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+	}
+	return true
 }
