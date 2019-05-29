@@ -1,12 +1,14 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/idata-shopee/gopcp"
 	"github.com/idata-shopee/gopcp_service"
 	"github.com/idata-shopee/gopcp_stream"
 	"github.com/lock-free/obrero"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -51,14 +53,15 @@ func getProxySignError(args []interface{}) error {
 	return fmt.Errorf(`httpna: "proxy" method signature "(serviceType String, params, timeout)", args are %v`, args)
 }
 
+const CONFIG_FILE_PATH = "/data/httpna_conf.json"
+
 // curl -d '["proxy", "httpna", "[\"getServiceType\"]", 120]' -H "Content-Type: application/json" -X POST http://localhost:8080/api/pcp"
 func main() {
-	// TODO read httpNA Conf from configuration file
-	httpNAConf := HTTPNAConf{
-		PRIVATE_WPS:  map[string]bool{"query": true},
-		PUBLIC_WPS:   map[string]bool{"httpna": true},
-		AUTH_WP_NAME: "webAuth",
-		AUTH_METHOD:  "getUser",
+	// read conf
+	var httpNAConf HTTPNAConf
+	err := ReadJson(CONFIG_FILE_PATH, &httpNAConf)
+	if err != nil {
+		panic(err)
 	}
 
 	pcpClient := gopcp.PcpClient{}
@@ -151,4 +154,12 @@ func MustEnvOption(envName string) string {
 	} else {
 		return v
 	}
+}
+
+func ReadJson(filePath string, f interface{}) error {
+	source, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal([]byte(source), f)
 }
