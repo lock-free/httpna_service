@@ -128,9 +128,11 @@ func main() {
 				// 1. parse http cookie session information
 				sessionTxt, err := session.GetSession(httpAttachment.R, []byte(httpNAConf.SESSION_SECRECT_KEY), httpNAConf.SESSION_COOKIE_KEY)
 
-				return nil, &mid.HttpError{
-					Errno:  403, // need login
-					ErrMsg: err.Error(),
+				if err != nil {
+					return nil, &mid.HttpError{
+						Errno:  403, // need login
+						ErrMsg: err.Error(),
+					}
 				}
 
 				// 2. validate session by AUTH application
