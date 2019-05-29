@@ -126,7 +126,7 @@ func main() {
 			// for private services, need to check user information
 			if _, ok := httpNAConf.PRIVATE_WPS[serviceType]; ok {
 				// 1. parse http cookie session information
-				sessionTxt, err := session.GetSession(httpAttachment.R, []byte(httpNAConf.SESSION_SECRECT_KEY), httpNAConf.SESSION_PATH)
+				sessionTxt, err := session.GetSession(httpAttachment.R, []byte(httpNAConf.SESSION_SECRECT_KEY), httpNAConf.SESSION_COOKIE_KEY)
 
 				return nil, &mid.HttpError{
 					Errno:  403, // need login
