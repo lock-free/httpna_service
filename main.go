@@ -158,6 +158,12 @@ func main() {
 		}
 	})
 
+	// logout
+	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
+		session.RemoveSession(w, httpNAConf.SESSION_COOKIE_KEY, httpNAConf.SESSION_PATH)
+		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
+	})
+
 	err = GoogleOAuthMid(httpNAConf)
 	if err != nil {
 		panic(err)
