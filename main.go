@@ -60,6 +60,10 @@ func main() {
 	// read conf
 	var httpNAConf HTTPNAConf
 	err := ReadJson(CONFIG_FILE_PATH, &httpNAConf)
+
+	log.Println("read config")
+	log.Println(httpNAConf)
+
 	if err != nil {
 		panic(err)
 	}
