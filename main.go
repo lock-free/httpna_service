@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"github.com/idata-shopee/gopcp"
-	"github.com/idata-shopee/gopcp_service"
 	"github.com/idata-shopee/gopcp_stream"
+	"github.com/lock-free/httpna_service/mid"
+	"github.com/lock-free/httpna_service/session"
 	"github.com/lock-free/obrero"
 	"io/ioutil"
 	"log"
@@ -27,26 +28,18 @@ type HttpAttachment struct {
 }
 
 type HTTPNAConf struct {
-	PRIVATE_WPS  map[string]bool
-	PUBLIC_WPS   map[string]bool
-	AUTH_WP_NAME string
-	AUTH_METHOD  string
+	PRIVATE_WPS         map[string]bool
+	PUBLIC_WPS          map[string]bool
+	AUTH_WP_NAME        string
+	AUTH_METHOD         string
+	SESSION_COOKIE_KEY  string
+	SESSION_SECRECT_KEY string
+	SESSION_PATH        string
 }
 
-func getUserFromAuthWp(attachment interface{}, naPools obrero.NAPools, authWpName string, authMethod string, timeout time.Duration) (interface{}, error) {
+func getUserFromAuthWp(sessionTxt string, naPools obrero.NAPools, authWpName string, authMethod string, timeout time.Duration) (interface{}, error) {
 	pcpClient := gopcp.PcpClient{}
-	httpAttachment := attachment.(HttpAttachment)
-
-	// extract cookie
-	var cookieMap = make(map[string]string)
-
-	for _, cookie := range httpAttachment.R.Cookies() {
-		cookieMap[cookie.Name] = cookie.Value
-	}
-
-	// TODO extract headers
-
-	return naPools.CallProxy(authWpName, pcpClient.Call(authMethod, cookieMap), timeout)
+	return naPools.CallProxy(authWpName, pcpClient.Call(authMethod, sessionTxt), timeout)
 }
 
 func getProxySignError(args []interface{}) error {
@@ -83,9 +76,11 @@ func main() {
 	})
 
 	// middleware for proxy http request to wp
-	pcpMid := gopcp_service.GetPcpMid(gopcp.GetSandbox(map[string]*gopcp.BoxFunc{
+	pcpMid := mid.GetPcpMid(gopcp.GetSandbox(map[string]*gopcp.BoxFunc{
 		// [proxy, serviceType, exp, timeout]
 		"proxy": gopcp.ToLazySandboxFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
+			httpAttachment := attachment.(HttpAttachment)
+
 			// 1. check it's public proxy or private proxy
 			// 2. for private proxy, need to call auth service
 			if len(args) < 3 {
@@ -123,14 +118,24 @@ func main() {
 			}
 
 			timeoutDuration := time.Duration(int(timeout)) * time.Second
+			// for private services, need to check user information
 			if _, ok := httpNAConf.PRIVATE_WPS[serviceType]; ok {
-				user, err := getUserFromAuthWp(attachment, naPools, httpNAConf.AUTH_WP_NAME, httpNAConf.AUTH_METHOD, timeoutDuration)
+				// 1. parse http cookie session information
+				sessionTxt, err := session.GetSession(httpAttachment.R, []byte(httpNAConf.SESSION_SECRECT_KEY), httpNAConf.SESSION_PATH)
+
+				return nil, &mid.HttpError{
+					Errno:  403, // need login
+					ErrMsg: err.Error(),
+				}
+
+				// 2. validate session by AUTH application
+				user, err := getUserFromAuthWp(sessionTxt, naPools, httpNAConf.AUTH_WP_NAME, httpNAConf.AUTH_METHOD, timeoutDuration)
 				if err != nil {
 					return nil, err
-				} else {
-					// add user as first parameter
-					return naPools.CallProxy(serviceType, pcpClient.Call(funName, append([]interface{}{user}, params[1:]...)), timeoutDuration)
 				}
+
+				// 3. add user as first parameter to query private services
+				return naPools.CallProxy(serviceType, pcpClient.Call(funName, append([]interface{}{user}, params[1:]...)), timeoutDuration)
 			} else if _, ok = httpNAConf.PUBLIC_WPS[serviceType]; ok {
 				return naPools.CallProxy(serviceType, pcpClient.Call(funName, params[1:]...), timeoutDuration)
 			} else {
