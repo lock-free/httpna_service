@@ -3,7 +3,7 @@ package mid
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/idata-shopee/gopcp"
+	"github.com/lock-free/gopcp"
 	"net/http"
 	"net/url"
 )

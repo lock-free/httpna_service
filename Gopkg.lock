@@ -6,8 +6,8 @@
   name = "cloud.google.com/go"
   packages = ["compute/metadata"]
   pruneopts = "UT"
-  revision = "775730d6e48254a2430366162cf6298e5368833c"
-  version = "v0.39.0"
+  revision = "457ea5c15ccf3b87db582c450e80101989da35f7"
+  version = "v0.40.0"
 
 [[projects]]
   digest = "1:318f1c959a8a740366fce4b1e1eb2fd914036b4af58fbd0a003349b305f118ad"
@@ -19,51 +19,51 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:141e42298899ea9afdf79d04031472538584877344c37c8da384e4830453fdca"
-  name = "github.com/idata-shopee/goaio"
+  digest = "1:562fc7c45fb24cd6519f945e4a9a626455c871853ad0cb009908cf4269f9375a"
+  name = "github.com/lock-free/goaio"
   packages = ["."]
   pruneopts = "UT"
-  revision = "fd8d47c91f1785e6ec220088fa018334e9df3b6b"
+  revision = "9d53a70585c6663b54f9ce6dfbfce7259ad09e25"
 
 [[projects]]
   branch = "master"
-  digest = "1:a99b91cdaf3b193940352722e4ee8e3dafeb8b87705efa5bb61bd9627e74246f"
-  name = "github.com/idata-shopee/gopcp"
+  digest = "1:5f58a8cc2dbb68949205a7239c078d953784a4baa528a153fa5cd397f85cf7b4"
+  name = "github.com/lock-free/gopcp"
   packages = ["."]
   pruneopts = "UT"
-  revision = "46afddfb90bb1b9d14345c8d4c0d3e4ca543819c"
+  revision = "4bb6ee155fea63ee5b8251602df93991b29f9f55"
 
 [[projects]]
   branch = "master"
-  digest = "1:b952965a6e84795138a0a011e10248282b0d195fa1afc322239d5ea8ea702580"
-  name = "github.com/idata-shopee/gopcp_rpc"
+  digest = "1:eb5b2d5bb9ad485e35deb033d4fbbd2c7135af2de15708de9d3d461c57ab0554"
+  name = "github.com/lock-free/gopcp_rpc"
   packages = ["."]
   pruneopts = "UT"
-  revision = "cd98c5934853f5cb993aead275de1d6df8202dcf"
+  revision = "6c983b73aa85a68eb2bc3a0016c98bf017ca6b05"
 
 [[projects]]
   branch = "master"
-  digest = "1:b19d9b55357e831e46a048a350887698c7e9b5146a4ef79d4bde5d0b65bec591"
-  name = "github.com/idata-shopee/gopcp_stream"
+  digest = "1:8de4af927c33fc7a525457c2d694490131d37b755d03d504ad838fd0e422d686"
+  name = "github.com/lock-free/gopcp_stream"
   packages = ["."]
   pruneopts = "UT"
-  revision = "b66198216d74bd3d1c4c03dff2503dd138c98ca6"
+  revision = "a77f7b6c17b34b658b81decc64688fb9a2da0db3"
 
 [[projects]]
   branch = "master"
-  digest = "1:ca3681f6e4804d2b2d6ebfb237a2344f3309b61c462f637f03fbb2174f6ce97f"
-  name = "github.com/idata-shopee/gopool"
+  digest = "1:9d0f1d5239e82b93dbed4775577e17e45de497982ebe5b6eb0dea1b6c108b04d"
+  name = "github.com/lock-free/gopool"
   packages = ["."]
   pruneopts = "UT"
-  revision = "e1576262f8643bd2a72e0a615ae31c1f103f6e86"
+  revision = "329206275cf067eb4e3d868d29b8948dbdc88879"
 
 [[projects]]
   branch = "master"
-  digest = "1:7e39b028b26b65295e1d463c341e01a0b5d5fdf76b0e7e7313804a292685519a"
+  digest = "1:1ecef32b37b6ed0f5ffaa7f0551321ed85cfcfd48bb54d2d37191f24f79d53f7"
   name = "github.com/lock-free/obrero"
   packages = ["."]
   pruneopts = "UT"
-  revision = "ccf4e25003f933ee1815518eded46b30c0ea8ca5"
+  revision = "f3292d1317d194075b6ef7a575e7f1dd4cda3170"
 
 [[projects]]
   digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
@@ -82,11 +82,11 @@
     "context/ctxhttp",
   ]
   pruneopts = "UT"
-  revision = "f3200d17e092c607f615320ecaad13d87ad9a2b3"
+  revision = "461777fb6f67e8cb9d70cda16573678d085a74cf"
 
 [[projects]]
   branch = "master"
-  digest = "1:7cba983d19f4aa6a154d73268dcc67a66bcc24bd7ee1c1b09d448a721dea0d9f"
+  digest = "1:31e33f76456ccf54819ab4a646cf01271d1a99d7712ab84bf1a9e7b61cd2031b"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
@@ -96,10 +96,10 @@
     "jwt",
   ]
   pruneopts = "UT"
-  revision = "aaccbc9213b0974828f81aaac109d194880e3014"
+  revision = "0f29369cfe4552d0e4bcddc57cc75f4d7e672a33"
 
 [[projects]]
-  digest = "1:ae8b6cd1af38908c84050254b3fe998dcf6926c6e85d8e504a7402ab32da4569"
+  digest = "1:498b722d33dde4471e7d6e5d88a5e7132d2a8306fea5ff5ee82d1f418b4f41ed"
   name = "google.golang.org/appengine"
   packages = [
     ".",
@@ -114,15 +114,15 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "4c25cacc810c02874000e4f7071286a8e96b2515"
-  version = "v1.6.0"
+  revision = "b2f4a3cf3c67576a2ee09e1fe62656a5086ce880"
+  version = "v1.6.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
-    "github.com/idata-shopee/gopcp",
-    "github.com/idata-shopee/gopcp_stream",
+    "github.com/lock-free/gopcp",
+    "github.com/lock-free/gopcp_stream",
     "github.com/lock-free/obrero",
     "golang.org/x/oauth2",
     "golang.org/x/oauth2/google",
