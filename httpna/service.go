@@ -138,7 +138,7 @@ func route(httpNAConf HTTPNAConf) {
 		// [proxy, serviceType, exp, timeout]
 		// 1. check it's public proxy or private proxy
 		// 2. for private proxy, need to call auth service
-		"proxy": gopcp.ToLazySandboxFun(mid.FlushPcpFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
+		"proxy": gopcp.ToSandboxFun(mid.FlushPcpFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
 			httpAttachment := attachment.(mid.HttpAttachment)
 
 			serviceType, funName, params, timeout, err := ParseProxyCallExp(args)
