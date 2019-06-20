@@ -17,7 +17,9 @@ run:
 	@go run main.go
 
 test:
-	@echo "test"
+	@cd ./session && go test -v -race
+	@cd ./mid && go test -v -race
+	@cd ./httpna && go test -v -race
 
 build:
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o stage/bin/httpna_service .

@@ -23,29 +23,29 @@ func JSONMarshal(t interface{}) ([]byte, error) {
 }
 
 func ResponseToBytes(pcpHttpRes PcpHttpResponse) []byte {
-	bytes, jerr := JSONMarshal(pcpHttpRes)
+	bytes, err := JSONMarshal(pcpHttpRes)
 
-	if jerr != nil {
-		ret, _ := json.Marshal(ErrorToResponse(jerr))
-		return ret
-	} else {
-		return bytes
+	if err != nil {
+		bytes, _ = json.Marshal(ErrorToResponse(err))
 	}
+
+	return bytes
 }
 
 type MidFunType = func(http.ResponseWriter, *http.Request, interface{}) (interface{}, error)
 
+// define http error type
 type HttpError struct {
 	Errno  int
 	ErrMsg string
 }
 
-func (he *HttpError) Error() string {
-	return he.ErrMsg
+func (err *HttpError) Error() string {
+	return err.ErrMsg
 }
 
 func ErrorToResponse(err error) PcpHttpResponse {
-	code := 530
+	code := 530 // default error code
 	if err, ok := err.(*HttpError); ok {
 		code = err.Errno
 	}
@@ -55,12 +55,9 @@ func ErrorToResponse(err error) PcpHttpResponse {
 func GetPcpMid(sandbox *gopcp.Sandbox) MidFunType {
 	pcpServer := gopcp.NewPcpServer(sandbox)
 
-	return func(w http.ResponseWriter, r *http.Request, attachment interface{}) (interface{}, error) {
+	return func(w http.ResponseWriter, r *http.Request, attachment interface{}) (arr interface{}, err error) {
 		var pcpHttpRes PcpHttpResponse
-		var arr interface{}
-		var err error = nil
 		var rawQuery string
-		var ret interface{}
 
 		if r.Method == "GET" {
 			rawQuery, err = url.QueryUnescape(r.URL.RawQuery)
@@ -68,34 +65,51 @@ func GetPcpMid(sandbox *gopcp.Sandbox) MidFunType {
 				// parse url query
 				err = json.Unmarshal([]byte(rawQuery), &arr)
 			}
-		} else {
+		} else if r.Method == "POST" || r.Method == "PUT" { // POST, PUT
 			// get post body
 			arr, err = GetJsonBody(r)
+		} else {
+			err = &HttpError{541, "Unexpected http method. Expect Get or POST or PUT."}
 		}
 
 		if err != nil {
+			// write error back
 			pcpHttpRes = ErrorToResponse(err)
-		} else {
-			ret, err = pcpServer.ExecuteJsonObj(arr, attachment)
-
-			if err != nil {
-				pcpHttpRes = ErrorToResponse(err)
-			} else {
-				pcpHttpRes = PcpHttpResponse{ret, 0, ""}
-			}
+			w.Write(ResponseToBytes(pcpHttpRes))
+			return
 		}
 
-		w.Write(ResponseToBytes(pcpHttpRes))
-		return arr, err
+		pcpServer.ExecuteJsonObj(arr, attachment)
+
+		return
 	}
 }
 
-func GetJsonBody(r *http.Request) (interface{}, error) {
-	decorder := json.NewDecoder(r.Body)
-	var arr interface{}
-	if derr := decorder.Decode(&arr); derr != nil {
-		return nil, derr
-	} else {
-		return arr, nil
+func FlushPcpFun(pcpFun gopcp.GeneralFun) gopcp.GeneralFun {
+	return func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (ret interface{}, err error) {
+		ret, err = pcpFun(args, attachment, pcpServer)
+
+		var pcpHttpRes PcpHttpResponse
+		if err != nil {
+			pcpHttpRes = ErrorToResponse(err)
+		} else {
+			pcpHttpRes = PcpHttpResponse{ret, 0, ""}
+		}
+
+		httpAttachment := attachment.(HttpAttachment)
+		httpAttachment.W.Write(ResponseToBytes(pcpHttpRes))
+
+		return
 	}
+}
+
+type HttpAttachment struct {
+	W http.ResponseWriter
+	R *http.Request
+}
+
+func GetJsonBody(r *http.Request) (arr interface{}, err error) {
+	decorder := json.NewDecoder(r.Body)
+	err = decorder.Decode(&arr)
+	return
 }

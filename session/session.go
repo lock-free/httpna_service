@@ -48,11 +48,7 @@ func GetSession(r *http.Request,
 	if err != nil {
 		return "", err
 	}
-	sourceText, err := Decrypt(sessionKey, cookie.Value)
-	if err != nil {
-		return "", err
-	}
-	return sourceText, nil
+	return Decrypt(sessionKey, cookie.Value)
 }
 
 // remove session from cookie
