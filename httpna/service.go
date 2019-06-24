@@ -65,7 +65,8 @@ func ParseProxyCallExp(args []interface{}) (serviceType string, funName string, 
 	return
 }
 
-func ParseProxyStreamCallExp(args []interface{}) (serviceType string, funName string, params []interface{}, timeout time.Duration, err error) {
+// (download, serviceType, [funName, params...], downloadConfig, timeout)
+func ParseDownloadCallExp(args []interface{}) (serviceType string, funName string, params []interface{}, downloadConfig map[string]interface{}, timeout time.Duration, err error) {
 	var ok = true
 	var timeoutf float64
 
@@ -85,7 +86,11 @@ func ParseProxyStreamCallExp(args []interface{}) (serviceType string, funName st
 	}
 
 	if ok {
-		timeoutf, ok = args[2].(float64)
+		downloadConfig, ok = args[2].(map[string]interface{})
+	}
+
+	if ok {
+		timeoutf, ok = args[3].(float64)
 		if ok {
 			timeout = time.Duration(timeoutf) * time.Second
 		}
@@ -114,7 +119,7 @@ func getProxySignError(args []interface{}) error {
 }
 
 func getProxyStreamSignError(args []interface{}) error {
-	return fmt.Errorf(`"proxyStream" method signature "(serviceType String, list []Any, timeout Int)" eg: ("download-service", ["getRecords", 1000], 120), args are %v`, args)
+	return fmt.Errorf(`"download" method signature "(serviceType String, list []Any, config Map[string]Any, timeout Int)" eg: ("download-service", ["getRecords", 1000], {"contentType": "text/csv(UTF-8)", "filename": "test.csv"}, 120), args are %v`, args)
 }
 
 func route(httpNAConf HTTPNAConf) {
@@ -173,9 +178,11 @@ func route(httpNAConf HTTPNAConf) {
 			}
 		})),
 
-		"proxyStream": gopcp.ToLazySandboxFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
+		// download stream data from service
+		// (download, serviceType, [funName, params...], downloadConfig, timeout)
+		"download": gopcp.ToSandboxFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
 			httpAttachment := attachment.(mid.HttpAttachment)
-			serviceType, funName, params, timeout, err := ParseProxyStreamCallExp(args)
+			serviceType, funName, params, downloadConfig, timeout, err := ParseDownloadCallExp(args)
 			if err != nil {
 				httpAttachment.W.Write(mid.ResponseToBytes(mid.ErrorToResponse(err)))
 				return nil, nil
@@ -216,14 +223,36 @@ func route(httpNAConf HTTPNAConf) {
 			if !ok {
 				panic("expected http.ResponseWriter to be an http.Flusher")
 			}
+
+			// set headers
 			httpAttachment.W.Header().Set("X-Content-Type-Options", "nosniff")
+			// set filename
+			if filenameI, ok := downloadConfig["filename"]; ok {
+				if filename, ok := filenameI.(string); ok {
+					httpAttachment.W.Header().Set("Content-Disposition", filename)
+				}
+			}
+			// set content type
+			if contentTypeI, ok := downloadConfig["contentType"]; ok {
+				if contentType, ok := contentTypeI.(string); ok {
+					httpAttachment.W.Header().Set("Content-Disposition", contentType)
+				}
+			}
 
 			// TODO timeout?
 			_, err = naPools.CallProxyStream(serviceType, pcpClient.Call(funName, params...), func(t int, d interface{}) {
 				// write response of stream back to client
 				switch t {
 				case gopcp_stream.STREAM_DATA:
-					fmt.Fprintf(httpAttachment.W, "%v", d)
+					// d should be a list of texts which means a bundle
+					if ds, ok := d.([]interface{}); ok {
+						for _, item := range ds {
+							fmt.Fprintf(httpAttachment.W, "%s", item)
+						}
+					} else {
+						fmt.Fprintf(httpAttachment.W, "%v", d)
+					}
+
 					flusher.Flush()
 				case gopcp_stream.STREAM_END:
 					wg.Done()

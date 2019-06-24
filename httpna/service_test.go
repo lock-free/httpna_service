@@ -26,8 +26,8 @@ func TestParseProxyCallExp(t *testing.T) {
 	assertEqual(t, to, time.Duration(120)*time.Second, "")
 }
 
-func TestParseProxyStreamCallExp(t *testing.T) {
-	st, fn, ps, to, err := ParseProxyStreamCallExp([]interface{}{"user-service", []interface{}{"getUser", "test"}, 120.0})
+func TestParseDownloadCallExp(t *testing.T) {
+	st, fn, ps, _, to, err := ParseDownloadCallExp([]interface{}{"user-service", []interface{}{"getUser", "test"}, make(map[string]interface{}), 120.0})
 	assertEqual(t, st, "user-service", "")
 	assertEqual(t, fn, "getUser", "")
 	assertEqual(t, len(ps), 1, "")
