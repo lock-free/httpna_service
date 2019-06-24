@@ -229,7 +229,7 @@ func route(httpNAConf HTTPNAConf) {
 			// set filename
 			if filenameI, ok := downloadConfig["filename"]; ok {
 				if filename, ok := filenameI.(string); ok {
-					httpAttachment.W.Header().Set("Content-Disposition", filename)
+					httpAttachment.W.Header().Set("Content-Disposition", "attachment; "+filename)
 				}
 			}
 			// set content type
