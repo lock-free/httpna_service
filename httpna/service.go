@@ -166,7 +166,10 @@ func route(httpNAConf HTTPNAConf) {
 				// 2. validate session by AUTH application
 				user, err := getUserFromAuthWp(sessionTxt, naPools, httpNAConf.AUTH_WP_NAME, httpNAConf.AUTH_METHOD, timeout)
 				if err != nil {
-					return nil, err
+					return nil, &mid.HttpError{
+						Errno:  403, // need login
+						ErrMsg: err.Error(),
+					}
 				}
 
 				// 3. add user as first parameter to query private services
@@ -204,7 +207,10 @@ func route(httpNAConf HTTPNAConf) {
 				// 2. validate session by AUTH application
 				user, err := getUserFromAuthWp(sessionTxt, naPools, httpNAConf.AUTH_WP_NAME, httpNAConf.AUTH_METHOD, timeout)
 				if err != nil {
-					httpAttachment.W.Write(mid.ResponseToBytes(mid.ErrorToResponse(err)))
+					httpAttachment.W.Write(mid.ResponseToBytes(mid.ErrorToResponse(&mid.HttpError{
+						Errno:  403, // need login
+						ErrMsg: err.Error(),
+					})))
 					return nil, nil
 				}
 
