@@ -3,6 +3,4 @@ RUN apk add --no-cache ca-certificates openssl
 WORKDIR /opt
 ADD --chown=daemon:daemon bin /opt
 USER daemon
-ENV PORT=8080
-EXPOSE 8080
 ENTRYPOINT ["./httpna_service"]
