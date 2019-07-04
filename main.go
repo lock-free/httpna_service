@@ -67,7 +67,23 @@ func GoogleOAuthMid(httpNAConf httpna.HTTPNAConf) error {
 		}
 
 		http.HandleFunc("/oauth/google/login", func(w http.ResponseWriter, r *http.Request) {
-			oauth.RedirectToGoogleOAuthUrl(&googleOAuthConfig, w, r)
+			redirect := r.URL.Scheme + "://" + r.URL.Host
+
+			if redirects, ok := r.URL.Query()["redirect"]; ok {
+				redirect = redirects[0]
+			}
+
+			// copy and change redirect
+			var goc = oauth2.Config{
+				ClientID:     googleOAuthConfig.ClientID,
+				ClientSecret: googleOAuthConfig.ClientSecret,
+				Endpoint:     googleOAuthConfig.Endpoint,
+				RedirectURL:  redirect,
+				Scopes:       googleOAuthConfig.Scopes,
+			}
+
+			// parse redirect url
+			oauth.RedirectToGoogleOAuthUrl(&goc, w, r)
 		})
 
 		http.HandleFunc("/oauth/google/callback", func(w http.ResponseWriter, r *http.Request) {
