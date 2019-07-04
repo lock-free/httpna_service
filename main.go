@@ -78,7 +78,7 @@ func GoogleOAuthMid(httpNAConf httpna.HTTPNAConf) error {
 				ClientID:     googleOAuthConfig.ClientID,
 				ClientSecret: googleOAuthConfig.ClientSecret,
 				Endpoint:     googleOAuthConfig.Endpoint,
-				RedirectURL:  host + "/oauth/google/login?host=" + host,
+				RedirectURL:  host + "/oauth/google/callback?host=" + host,
 				Scopes:       googleOAuthConfig.Scopes,
 			}
 
@@ -99,7 +99,7 @@ func GoogleOAuthMid(httpNAConf httpna.HTTPNAConf) error {
 				ClientID:     googleOAuthConfig.ClientID,
 				ClientSecret: googleOAuthConfig.ClientSecret,
 				Endpoint:     googleOAuthConfig.Endpoint,
-				RedirectURL:  host + "/oauth/google/login?host=" + host,
+				RedirectURL:  host + "/oauth/google/callback?host=" + host,
 				Scopes:       googleOAuthConfig.Scopes,
 			}
 			googleUser, err := oauth.GetUserInfoFromGoogle(&goc, r)
