@@ -67,10 +67,10 @@ func GoogleOAuthMid(httpNAConf httpna.HTTPNAConf) error {
 		}
 
 		http.HandleFunc("/oauth/google/login", func(w http.ResponseWriter, r *http.Request) {
-			redirect := r.URL.Scheme + "://" + r.URL.Host
+			host := r.URL.Scheme + "://" + r.URL.Host
 
-			if redirects, ok := r.URL.Query()["redirect"]; ok {
-				redirect = redirects[0]
+			if hosts, ok := r.URL.Query()["host"]; ok {
+				host = hosts[0]
 			}
 
 			// copy and change redirect
@@ -78,16 +78,31 @@ func GoogleOAuthMid(httpNAConf httpna.HTTPNAConf) error {
 				ClientID:     googleOAuthConfig.ClientID,
 				ClientSecret: googleOAuthConfig.ClientSecret,
 				Endpoint:     googleOAuthConfig.Endpoint,
-				RedirectURL:  redirect,
+				RedirectURL:  host + "/oauth/google/login?host=" + host,
 				Scopes:       googleOAuthConfig.Scopes,
 			}
 
-			// parse redirect url
-			oauth.RedirectToGoogleOAuthUrl(&goc, w, r)
+			// redirect
+			url := goc.AuthCodeURL("state")
+			http.Redirect(w, r, url, http.StatusTemporaryRedirect)
 		})
 
 		http.HandleFunc("/oauth/google/callback", func(w http.ResponseWriter, r *http.Request) {
-			googleUser, err := oauth.GetUserInfoFromGoogle(&googleOAuthConfig, r)
+			host := r.URL.Scheme + "://" + r.URL.Host
+
+			if hosts, ok := r.URL.Query()["host"]; ok {
+				host = hosts[0]
+			}
+
+			// copy and change redirect
+			var goc = oauth2.Config{
+				ClientID:     googleOAuthConfig.ClientID,
+				ClientSecret: googleOAuthConfig.ClientSecret,
+				Endpoint:     googleOAuthConfig.Endpoint,
+				RedirectURL:  host + "/oauth/google/login?host=" + host,
+				Scopes:       googleOAuthConfig.Scopes,
+			}
+			googleUser, err := oauth.GetUserInfoFromGoogle(&goc, r)
 			if err != nil {
 				w.Write([]byte(err.Error()))
 				return
