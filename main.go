@@ -5,6 +5,7 @@ import (
 	"github.com/lock-free/httpna_service/httpna"
 	"github.com/lock-free/httpna_service/oauth"
 	"github.com/lock-free/httpna_service/session"
+	"github.com/lock-free/obrero"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"io/ioutil"
@@ -26,7 +27,7 @@ const CONFIG_FILE_PATH = "/data/httpna_conf.json"
 func main() {
 	// read conf
 	var httpNAConf httpna.HTTPNAConf
-	err := ReadJson(CONFIG_FILE_PATH, &httpNAConf)
+	err := obrero.ReadJson(CONFIG_FILE_PATH, &httpNAConf)
 
 	log.Println("read config:")
 	log.Println(httpNAConf)
@@ -35,7 +36,7 @@ func main() {
 		panic(err)
 	}
 
-	portText := MustEnvOption("PORT")
+	portText := obrero.MustEnvOption("PORT")
 	port, err := strconv.Atoi(portText)
 	if err != nil {
 		panic(err)
@@ -137,22 +138,6 @@ func GoogleOAuthMid(httpNAConf httpna.HTTPNAConf) error {
 type SessionUser struct {
 	Source string
 	User   interface{}
-}
-
-func MustEnvOption(envName string) string {
-	if v := os.Getenv(envName); v == "" {
-		panic("missing env " + envName + " which must exists.")
-	} else {
-		return v
-	}
-}
-
-func ReadJson(filePath string, f interface{}) error {
-	source, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal([]byte(source), f)
 }
 
 func Exists(name string) bool {
