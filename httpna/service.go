@@ -146,8 +146,6 @@ func LogMid(logPrefix string, fn gopcp.GeneralFun) gopcp.GeneralFun {
 }
 
 func route(httpNAConf HTTPNAConf) {
-	pcpClient := gopcp.PcpClient{}
-
 	naPools := obrero.StartWorker(func(*gopcp_stream.StreamServer) *gopcp.Sandbox {
 		return gopcp.GetSandbox(map[string]*gopcp.BoxFunc{
 			"getServiceType": gopcp.ToSandboxFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
@@ -171,6 +169,7 @@ func route(httpNAConf HTTPNAConf) {
 				httpAttachment := attachment.(mid.HttpAttachment)
 
 				serviceType, funName, params, timeout, err := ParseProxyCallExp(args)
+
 				if err != nil {
 					return nil, err
 				}
@@ -197,12 +196,22 @@ func route(httpNAConf HTTPNAConf) {
 					}
 
 					// 3. add user as first parameter to query private services
-					return naPools.CallProxy(serviceType, pcpClient.Call(funName, append([]interface{}{user}, params...)...), timeout)
-				} else if _, ok = httpNAConf.PUBLIC_WPS[serviceType]; ok {
-					return naPools.CallProxy(serviceType, pcpClient.Call(funName, params...), timeout)
-				} else {
-					return nil, errors.New("Try to access unexported worker")
+					return naPools.CallProxy(
+						serviceType,
+						gopcp.CallResult{append([]interface{}{funName, user}, params...)},
+						timeout,
+					)
 				}
+
+				if _, ok := httpNAConf.PUBLIC_WPS[serviceType]; ok {
+					return naPools.CallProxy(
+						serviceType,
+						gopcp.CallResult{append([]interface{}{funName}, params...)},
+						timeout,
+					)
+				}
+
+				return nil, errors.New("Try to access unexported worker")
 			})),
 		),
 
@@ -241,9 +250,9 @@ func route(httpNAConf HTTPNAConf) {
 					}
 
 					// 3. add user as first parameter to query private services
-					params = append([]interface{}{user}, params...)
+					params = append([]interface{}{funName, user}, params...)
 				} else if _, ok = httpNAConf.PUBLIC_WPS[serviceType]; ok {
-					//
+					// To nothing
 				} else {
 					httpAttachment.W.Write(mid.ResponseToBytes(mid.ErrorToResponse(errors.New("Try to access unexported worker"))))
 					return nil, nil
@@ -272,32 +281,35 @@ func route(httpNAConf HTTPNAConf) {
 				}
 
 				// TODO timeout?
-				_, err = naPools.CallProxyStream(serviceType, pcpClient.Call(funName, params...), func(t int, d interface{}) {
-					// write response of stream back to client
-					switch t {
-					case gopcp_stream.STREAM_DATA:
-						// d should be a list of texts which means a bundle
-						if ds, ok := d.([]interface{}); ok {
-							for _, item := range ds {
-								fmt.Fprintf(httpAttachment.W, "%s", item)
+				_, err = naPools.CallProxyStream(
+					serviceType,
+					gopcp.CallResult{append([]interface{}{funName}, params...)},
+					func(t int, d interface{}) {
+						// write response of stream back to client
+						switch t {
+						case gopcp_stream.STREAM_DATA:
+							// d should be a list of texts which means a bundle
+							if ds, ok := d.([]interface{}); ok {
+								for _, item := range ds {
+									fmt.Fprintf(httpAttachment.W, "%s", item)
+								}
+							} else {
+								fmt.Fprintf(httpAttachment.W, "%v", d)
 							}
-						} else {
-							fmt.Fprintf(httpAttachment.W, "%v", d)
-						}
 
-						flusher.Flush()
-					case gopcp_stream.STREAM_END:
-						wg.Done()
-					default:
-						if errMsg, ok := d.(string); !ok {
-							fmt.Fprintf(httpAttachment.W, "errored at stream, and responsed error message is not string. d=%v", d)
-						} else {
-							fmt.Fprintf(httpAttachment.W, errMsg)
+							flusher.Flush()
+						case gopcp_stream.STREAM_END:
+							wg.Done()
+						default:
+							if errMsg, ok := d.(string); !ok {
+								fmt.Fprintf(httpAttachment.W, "errored at stream, and responsed error message is not string. d=%v", d)
+							} else {
+								fmt.Fprintf(httpAttachment.W, errMsg)
+							}
+							flusher.Flush()
+							wg.Done()
 						}
-						flusher.Flush()
-						wg.Done()
-					}
-				}, timeout)
+					}, timeout)
 
 				if err != nil {
 					httpAttachment.W.Write(mid.ResponseToBytes(mid.ErrorToResponse(err)))
