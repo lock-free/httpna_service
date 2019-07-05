@@ -8,7 +8,6 @@ import (
 	"github.com/lock-free/obrero"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -57,7 +56,7 @@ func GoogleOAuthMid(httpNAConf httpna.HTTPNAConf) error {
 	if Exists(GOOGLE_OAUTH_CONFIG_FILE_PATH) {
 		// read conf
 		var googleOAuthConfig oauth2.Config
-		err := ReadJson(GOOGLE_OAUTH_CONFIG_FILE_PATH, &googleOAuthConfig)
+		err := obrero.ReadJson(GOOGLE_OAUTH_CONFIG_FILE_PATH, &googleOAuthConfig)
 
 		log.Println("read google oauth config:")
 		log.Println(googleOAuthConfig)

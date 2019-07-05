@@ -125,11 +125,11 @@ func getUserFromAuthWp(sessionTxt string, naPools obrero.NAPools, authWpName str
 }
 
 func getProxySignError(args []interface{}) error {
-	return fmt.Errorf(`"proxy" method signature "(serviceType String, list []Any, timeout Int)" eg: ("user-service", ["'", ["getUser", "01234"]], 120), args are %v`, args)
+	return fmt.Errorf(`"proxy" method signature "(serviceType String, list []Any, timeout Int)" eg: ("user-service", [["getUser", "01234"]], 120), args are %v`, args)
 }
 
 func getProxyStreamSignError(args []interface{}) error {
-	return fmt.Errorf(`"download" method signature "(serviceType String, list []Any, config Map[string]Any, timeout Int)" eg: ("download-service", ["'", ["getRecords", 1000]], {"contentType": "text/csv(UTF-8)", "filename": "test.csv"}, 120), args are %v`, args)
+	return fmt.Errorf(`"download" method signature "(serviceType String, list []Any, config Map[string]Any, timeout Int)" eg: ("download-service", [["getRecords", 1000]], {"contentType": "text/csv(UTF-8)", "filename": "test.csv"}, 120), args are %v`, args)
 }
 
 func LogMid(logPrefix string, fn gopcp.GeneralFun) gopcp.GeneralFun {
