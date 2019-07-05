@@ -17,7 +17,7 @@ func assertEqual(t *testing.T, expect interface{}, actual interface{}, message s
 }
 
 func TestParseProxyCallExp(t *testing.T) {
-	st, fn, ps, to, err := ParseProxyCallExp([]interface{}{"user-service", []interface{}{"getUser", "test"}, 120.0})
+	st, fn, ps, to, err := ParseProxyCallExp([]interface{}{"user-service", []interface{}{[]interface{}{"getUser", "test"}}, 120.0})
 	assertEqual(t, st, "user-service", "")
 	assertEqual(t, fn, "getUser", "")
 	assertEqual(t, len(ps), 1, "")
@@ -27,7 +27,7 @@ func TestParseProxyCallExp(t *testing.T) {
 }
 
 func TestParseDownloadCallExp(t *testing.T) {
-	st, fn, ps, _, to, err := ParseDownloadCallExp([]interface{}{"user-service", []interface{}{"getUser", "test"}, make(map[string]interface{}), 120.0})
+	st, fn, ps, _, to, err := ParseDownloadCallExp([]interface{}{"user-service", []interface{}{[]interface{}{"getUser", "test"}}, make(map[string]interface{}), 120.0})
 	assertEqual(t, st, "user-service", "")
 	assertEqual(t, fn, "getUser", "")
 	assertEqual(t, len(ps), 1, "")

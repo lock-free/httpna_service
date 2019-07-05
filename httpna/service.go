@@ -28,6 +28,7 @@ type HTTPNAConf struct {
 
 func ParseProxyCallExp(args []interface{}) (serviceType string, funName string, params []interface{}, timeout time.Duration, err error) {
 	var ok = true
+	var list []interface{}
 	var timeoutf float64
 
 	if len(args) < 3 {
@@ -39,7 +40,11 @@ func ParseProxyCallExp(args []interface{}) (serviceType string, funName string, 
 	}
 
 	if ok {
-		params, ok = args[1].([]interface{})
+		list, ok = args[1].([]interface{})
+	}
+
+	if ok {
+		params, ok = list[0].([]interface{})
 		if len(params) <= 0 {
 			ok = false
 		}
@@ -68,6 +73,7 @@ func ParseProxyCallExp(args []interface{}) (serviceType string, funName string, 
 // (download, serviceType, [funName, params...], downloadConfig, timeout)
 func ParseDownloadCallExp(args []interface{}) (serviceType string, funName string, params []interface{}, downloadConfig map[string]interface{}, timeout time.Duration, err error) {
 	var ok = true
+	var list []interface{}
 	var timeoutf float64
 
 	if len(args) < 3 {
@@ -79,7 +85,11 @@ func ParseDownloadCallExp(args []interface{}) (serviceType string, funName strin
 	}
 
 	if ok {
-		params, ok = args[1].([]interface{})
+		list, ok = args[1].([]interface{})
+	}
+
+	if ok {
+		params, ok = list[0].([]interface{})
 		if len(params) <= 0 {
 			ok = false
 		}
@@ -115,11 +125,11 @@ func getUserFromAuthWp(sessionTxt string, naPools obrero.NAPools, authWpName str
 }
 
 func getProxySignError(args []interface{}) error {
-	return fmt.Errorf(`"proxy" method signature "(serviceType String, list []Any, timeout Int)" eg: ("user-service", ["getUser", "01234"], 120), args are %v`, args)
+	return fmt.Errorf(`"proxy" method signature "(serviceType String, list []Any, timeout Int)" eg: ("user-service", ["'", ["getUser", "01234"]], 120), args are %v`, args)
 }
 
 func getProxyStreamSignError(args []interface{}) error {
-	return fmt.Errorf(`"download" method signature "(serviceType String, list []Any, config Map[string]Any, timeout Int)" eg: ("download-service", ["getRecords", 1000], {"contentType": "text/csv(UTF-8)", "filename": "test.csv"}, 120), args are %v`, args)
+	return fmt.Errorf(`"download" method signature "(serviceType String, list []Any, config Map[string]Any, timeout Int)" eg: ("download-service", ["'", ["getRecords", 1000]], {"contentType": "text/csv(UTF-8)", "filename": "test.csv"}, 120), args are %v`, args)
 }
 
 func LogMid(logPrefix string, fn gopcp.GeneralFun) gopcp.GeneralFun {
