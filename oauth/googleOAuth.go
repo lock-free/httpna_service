@@ -22,10 +22,51 @@ type GoogleUser struct {
 	HD            string
 }
 
-// redirect to goole oauth url
-func RedirectToGoogleOAuthUrl(config *oauth2.Config, w http.ResponseWriter, r *http.Request) {
-	url := config.AuthCodeURL("state")
-	http.Redirect(w, r, url, http.StatusTemporaryRedirect)
+type GoogleOAuthMid struct {
+	googleOAuthConfig oauth2.Config
+	loginEndPoint     string
+	callbackEndPoint  string
+}
+
+func GetGoogleOAuthMid(googleOAuthConfig oauth2.Config, loginEndPoint string, callbackEndPoint string) *GoogleOAuthMid {
+	return &GoogleOAuthMid{
+		googleOAuthConfig,
+		loginEndPoint,
+		callbackEndPoint,
+	}
+}
+func (g GoogleOAuthMid) GetLoginEndPoint() string {
+	return g.loginEndPoint
+}
+
+func (g GoogleOAuthMid) GetCallbackEndPoint() string {
+	return g.callbackEndPoint
+}
+
+func (g GoogleOAuthMid) ConstructOAuthUrl(callbackHost string) string {
+	// copy and change redirect
+	var goc = oauth2.Config{
+		ClientID:     g.googleOAuthConfig.ClientID,
+		ClientSecret: g.googleOAuthConfig.ClientSecret,
+		Endpoint:     g.googleOAuthConfig.Endpoint,
+		RedirectURL:  callbackHost + "/oauth/google/callback?host=" + callbackHost,
+		Scopes:       g.googleOAuthConfig.Scopes,
+	}
+
+	// construct redirect url
+	return goc.AuthCodeURL("state")
+}
+
+func (g GoogleOAuthMid) GetUserInfo(callbackHost string, r *http.Request) (interface{}, error) {
+	// copy and change redirect
+	var goc = oauth2.Config{
+		ClientID:     g.googleOAuthConfig.ClientID,
+		ClientSecret: g.googleOAuthConfig.ClientSecret,
+		Endpoint:     g.googleOAuthConfig.Endpoint,
+		RedirectURL:  callbackHost + "/oauth/google/callback?host=" + callbackHost,
+		Scopes:       g.googleOAuthConfig.Scopes,
+	}
+	return GetUserInfoFromGoogle(&goc, r)
 }
 
 // call this to get user when callback

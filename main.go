@@ -1,18 +1,14 @@
 package main
 
 import (
-	"encoding/json"
 	"github.com/lock-free/httpna_service/httpna"
 	"github.com/lock-free/httpna_service/oauth"
-	"github.com/lock-free/httpna_service/session"
 	"github.com/lock-free/obrero"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"log"
-	"net/http"
 	"os"
 	"strconv"
-	"time"
 )
 
 // http na for cluster
@@ -41,6 +37,7 @@ func main() {
 		panic(err)
 	}
 
+	// load other mids
 	err = GoogleOAuthMid(httpNAConf)
 	if err != nil {
 		panic(err)
@@ -57,86 +54,19 @@ func GoogleOAuthMid(httpNAConf httpna.HTTPNAConf) error {
 		// read conf
 		var googleOAuthConfig oauth2.Config
 		err := obrero.ReadJson(GOOGLE_OAUTH_CONFIG_FILE_PATH, &googleOAuthConfig)
-
-		log.Println("read google oauth config:")
-		log.Println(googleOAuthConfig)
-		googleOAuthConfig.Endpoint = google.Endpoint
-
 		if err != nil {
 			return err
 		}
 
-		http.HandleFunc("/oauth/google/login", func(w http.ResponseWriter, r *http.Request) {
-			host := r.URL.Scheme + "://" + r.URL.Host
+		log.Println("read google oauth config:")
+		log.Println(googleOAuthConfig)
 
-			if hosts, ok := r.URL.Query()["host"]; ok {
-				host = hosts[0]
-			}
-
-			// copy and change redirect
-			var goc = oauth2.Config{
-				ClientID:     googleOAuthConfig.ClientID,
-				ClientSecret: googleOAuthConfig.ClientSecret,
-				Endpoint:     googleOAuthConfig.Endpoint,
-				RedirectURL:  host + "/oauth/google/callback?host=" + host,
-				Scopes:       googleOAuthConfig.Scopes,
-			}
-
-			// redirect
-			url := goc.AuthCodeURL("state")
-			http.Redirect(w, r, url, http.StatusTemporaryRedirect)
-		})
-
-		http.HandleFunc("/oauth/google/callback", func(w http.ResponseWriter, r *http.Request) {
-			host := r.URL.Scheme + "://" + r.URL.Host
-
-			if hosts, ok := r.URL.Query()["host"]; ok {
-				host = hosts[0]
-			}
-
-			// copy and change redirect
-			var goc = oauth2.Config{
-				ClientID:     googleOAuthConfig.ClientID,
-				ClientSecret: googleOAuthConfig.ClientSecret,
-				Endpoint:     googleOAuthConfig.Endpoint,
-				RedirectURL:  host + "/oauth/google/callback?host=" + host,
-				Scopes:       googleOAuthConfig.Scopes,
-			}
-			googleUser, err := oauth.GetUserInfoFromGoogle(&goc, r)
-			if err != nil {
-				w.Write([]byte(err.Error()))
-				return
-			}
-
-			sessionUser := SessionUser{"google", googleUser}
-			value, err := json.Marshal(sessionUser)
-			if err != nil {
-				w.Write([]byte(err.Error()))
-				return
-			}
-
-			err = session.SetSession(w,
-				[]byte(httpNAConf.SESSION_SECRECT_KEY),
-				httpNAConf.SESSION_COOKIE_KEY,
-				string(value),
-				httpNAConf.SESSION_PATH,
-				time.Duration(httpNAConf.SESSION_EXPIRE)*time.Second)
-
-			if err != nil {
-				w.Write([]byte(err.Error()))
-				return
-			}
-
-			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
-		})
+		googleOAuthConfig.Endpoint = google.Endpoint
+		var googleOAuthMid = oauth.GetGoogleOAuthMid(googleOAuthConfig, "/oauth/google/login", "/oauth/google/callback")
+		oauth.SetUpOAuthRoute(googleOAuthMid, httpNAConf.SESSION_SECRECT_KEY, httpNAConf.SESSION_COOKIE_KEY, httpNAConf.SESSION_PATH, httpNAConf.SESSION_EXPIRE)
 	}
 
 	return nil
-}
-
-type SessionUser struct {
-	Source string
-	User   interface{}
 }
 
 func Exists(name string) bool {
