@@ -3,19 +3,25 @@ package httpna
 import (
 	"errors"
 	"fmt"
+	"github.com/lock-free/goklog"
 	"github.com/lock-free/gopcp"
 	"github.com/lock-free/gopcp_stream"
 	"github.com/lock-free/httpna_service/mid"
 	"github.com/lock-free/httpna_service/session"
 	"github.com/lock-free/obrero"
-	"log"
+	"github.com/lock-free/obrero/mids"
+	"github.com/lock-free/obrero/napool"
+	"github.com/lock-free/obrero/utils"
 	"net/http"
 	"strconv"
 	"sync"
 	"time"
 )
 
+var klog = goklog.GetInstance()
+
 type HTTPNAConf struct {
+	PORT                int
 	PRIVATE_WPS         map[string]bool
 	PUBLIC_WPS          map[string]bool
 	AUTH_WP_NAME        string
@@ -24,6 +30,13 @@ type HTTPNAConf struct {
 	SESSION_SECRECT_KEY string
 	SESSION_PATH        string
 	SESSION_EXPIRE      int
+	OAuth               []OAuthConf
+}
+
+type OAuthConf struct {
+	LoginEndPoint    string
+	CallbackEndPoint string
+	ServiceType      string
 }
 
 func ParseProxyCallExp(args []interface{}) (serviceType string, funName string, params []interface{}, timeout time.Duration, err error) {
@@ -119,7 +132,7 @@ func ParseDownloadCallExp(args []interface{}) (serviceType string, funName strin
 	return
 }
 
-func getUserFromAuthWp(sessionTxt string, naPools obrero.NAPools, authWpName string, authMethod string, timeout time.Duration) (interface{}, error) {
+func getUserFromAuthWp(sessionTxt string, naPools napool.NAPools, authWpName string, authMethod string, timeout time.Duration) (interface{}, error) {
 	pcpClient := gopcp.PcpClient{}
 	return naPools.CallProxy(authWpName, pcpClient.Call(authMethod, sessionTxt), timeout)
 }
@@ -132,20 +145,7 @@ func getProxyStreamSignError(args []interface{}) error {
 	return fmt.Errorf(`"download" method signature "(serviceType String, list []Any, config Map[string]Any, timeout Int)" eg: ("download-service", [["getRecords", 1000]], {"contentType": "text/csv(UTF-8)", "filename": "test.csv"}, 120), args are %v`, args)
 }
 
-func LogMid(logPrefix string, fn gopcp.GeneralFun) gopcp.GeneralFun {
-	return func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (ret interface{}, err error) {
-		t1 := time.Now().Unix()
-
-		log.Printf("[access-%s] args=%v\n", logPrefix, args)
-		ret, err = fn(args, attachment, pcpServer)
-
-		t2 := time.Now().Unix()
-		log.Printf("[complete-%s] args=%v, time=%d\n", logPrefix, args, t2-t1)
-		return
-	}
-}
-
-func route(httpNAConf HTTPNAConf) {
+func Route(httpNAConf HTTPNAConf) napool.NAPools {
 	naPools := obrero.StartWorker(func(*gopcp_stream.StreamServer) *gopcp.Sandbox {
 		return gopcp.GetSandbox(map[string]*gopcp.BoxFunc{
 			"getServiceType": gopcp.ToSandboxFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
@@ -164,15 +164,30 @@ func route(httpNAConf HTTPNAConf) {
 		// [proxy, serviceType, exp, timeout]
 		// 1. check it's public proxy or private proxy
 		// 2. for private proxy, need to call auth service
-		"proxy": gopcp.ToSandboxFun(
-			LogMid("proxy", mid.FlushPcpFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
+		"proxy": gopcp.ToLazySandboxFun(
+			mids.LogMid("proxy", mid.FlushPcpFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
 				httpAttachment := attachment.(mid.HttpAttachment)
 
-				serviceType, funName, params, timeout, err := ParseProxyCallExp(args)
+				var (
+					serviceType string
+					exp         interface{}
+					timeout     int
+				)
+
+				err := utils.ParseArgs(args, []interface{}{&serviceType, &exp, &timeout}, "wrong signature, expect (proxy, serviceType: string, exp, timeout: int)")
+				exp = args[1]
 
 				if err != nil {
 					return nil, err
 				}
+
+				jsonObj := gopcp.ParseAstToJsonObject(exp)
+				arr, ok := jsonObj.([]interface{})
+				if !ok || len(arr) == 0 {
+					return nil, fmt.Errorf("Expect none-empty array, but got %v, args=%v", jsonObj, args)
+				}
+
+				var timeoutD = time.Duration(timeout) * time.Second
 
 				// for private services, need to check user information
 				if _, ok := httpNAConf.PRIVATE_WPS[serviceType]; ok {
@@ -187,7 +202,7 @@ func route(httpNAConf HTTPNAConf) {
 					}
 
 					// 2. validate session by AUTH application
-					user, err := getUserFromAuthWp(sessionTxt, naPools, httpNAConf.AUTH_WP_NAME, httpNAConf.AUTH_METHOD, timeout)
+					user, err := getUserFromAuthWp(sessionTxt, naPools, httpNAConf.AUTH_WP_NAME, httpNAConf.AUTH_METHOD, timeoutD)
 					if err != nil {
 						return nil, &mid.HttpError{
 							Errno:  403, // need login
@@ -196,19 +211,11 @@ func route(httpNAConf HTTPNAConf) {
 					}
 
 					// 3. add user as first parameter to query private services
-					return naPools.CallProxy(
-						serviceType,
-						gopcp.CallResult{append([]interface{}{funName, user}, params...)},
-						timeout,
-					)
+					return naPools.CallProxy(serviceType, gopcp.CallResult{append([]interface{}{arr[0], user}, arr[1:]...)}, timeoutD)
 				}
 
 				if _, ok := httpNAConf.PUBLIC_WPS[serviceType]; ok {
-					return naPools.CallProxy(
-						serviceType,
-						gopcp.CallResult{append([]interface{}{funName}, params...)},
-						timeout,
-					)
+					return naPools.CallProxy(serviceType, gopcp.CallResult{append([]interface{}{arr[0]}, arr[1:]...)}, timeoutD)
 				}
 
 				return nil, errors.New("Try to access unexported worker")
@@ -218,7 +225,7 @@ func route(httpNAConf HTTPNAConf) {
 		// download stream data from service
 		// (download, serviceType, [funName, params...], downloadConfig, timeout)
 		"download": gopcp.ToSandboxFun(
-			LogMid("download", func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
+			mids.LogMid("download", func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
 				httpAttachment := attachment.(mid.HttpAttachment)
 				serviceType, funName, params, downloadConfig, timeout, err := ParseDownloadCallExp(args)
 				if err != nil {
@@ -327,7 +334,7 @@ func route(httpNAConf HTTPNAConf) {
 	// http route
 	http.HandleFunc("/api/pcp", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := pcpMid(w, r, mid.HttpAttachment{R: r, W: w}); err != nil {
-			log.Printf("unexpected error at http pcp middleware, %v", err)
+			klog.LogError("pcp-mid", err)
 		}
 	})
 
@@ -336,10 +343,14 @@ func route(httpNAConf HTTPNAConf) {
 		session.RemoveSession(w, httpNAConf.SESSION_COOKIE_KEY, httpNAConf.SESSION_PATH)
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	})
+
+	return naPools
 }
 
-func StartHttpNAService(httpNAConf HTTPNAConf, port int) {
-	route(httpNAConf)
-	log.Println("try to start server at " + strconv.Itoa(port))
-	log.Fatal(http.ListenAndServe(":"+strconv.Itoa(port), nil))
+func StartHttpServer(port int) {
+	klog.LogNormal("start-service", "try to start tcp server at "+strconv.Itoa(port))
+	err := http.ListenAndServe(":"+strconv.Itoa(port), nil)
+	if err != nil {
+		panic(err)
+	}
 }

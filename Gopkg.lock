@@ -2,20 +2,20 @@
 
 
 [[projects]]
-  digest = "1:80004fcc5cf64e591486b3e11b406f1e0d17bf85d475d64203c8494f5da4fcd1"
-  name = "cloud.google.com/go"
-  packages = ["compute/metadata"]
+  digest = "1:aacef5f5e45685f2aeda5534d0a750dee6859de7e9088cdd06192787bb01ae6d"
+  name = "github.com/go-errors/errors"
+  packages = ["."]
   pruneopts = "UT"
-  revision = "cf81fad90a1a1de334c4fc27e23eb9a4224b627a"
-  version = "v0.41.0"
+  revision = "a6af135bd4e28680facf08a3d206b454abc877a4"
+  version = "v1.0.1"
 
 [[projects]]
-  digest = "1:318f1c959a8a740366fce4b1e1eb2fd914036b4af58fbd0a003349b305f118ad"
+  digest = "1:573ca21d3669500ff845bdebee890eb7fc7f0f50c59f2132f2a0c6b03d85086a"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
   pruneopts = "UT"
-  revision = "b5d812f8a3706043e23a9cd5babf2e5423744d30"
-  version = "v1.3.1"
+  revision = "6c65a5562fc06764971b7c5d05c76c75e84bdbf7"
+  version = "v1.3.2"
 
 [[projects]]
   branch = "master"
@@ -27,27 +27,35 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:31d1c2ff282b3dde5e54278bc56002c1f036016ccf50b00b4b28fb3c5fd00dc0"
+  digest = "1:65264f842ddf245067a9c31e3b1e1d5bcd9e75e5b027ce168d979a5e0d85fd4a"
+  name = "github.com/lock-free/goklog"
+  packages = ["."]
+  pruneopts = "UT"
+  revision = "ee6028c56a50021f7683c0d721d4775459c7aeed"
+
+[[projects]]
+  branch = "master"
+  digest = "1:3fcb1ee797279c52137484ade5321003b2e362a9c5ef86c197e3deb9882b0504"
   name = "github.com/lock-free/gopcp"
   packages = ["."]
   pruneopts = "UT"
-  revision = "3129bdd57c91ebee7d25f7397da0729d0f4c5726"
+  revision = "f39bb882c4f98e56afe0c75ba2f0eca4f89869e8"
 
 [[projects]]
   branch = "master"
-  digest = "1:3df56a4e75dd5e3ba280add186708d87f06c3fe9a204072ae4bf7f24ce07b8e4"
+  digest = "1:8ed2836c27dca9d8fc626ee9b9daf9ced6f99f06e901f73dc4f3d0a38db39a59"
   name = "github.com/lock-free/gopcp_rpc"
   packages = ["."]
   pruneopts = "UT"
-  revision = "896efd1d554353325d9c504062ff7302da1bc41d"
+  revision = "7d0925f6c026103d18932a1527842fb894b15b07"
 
 [[projects]]
   branch = "master"
-  digest = "1:497222e41fd3a8373308768b369a40ea4a41b593288794f2eebfaeafcd7bfdd7"
+  digest = "1:874dcd3e0f61dffb8a5c29dd16fd9641b135075ee5812db8984587e8e2773fb8"
   name = "github.com/lock-free/gopcp_stream"
   packages = ["."]
   pruneopts = "UT"
-  revision = "92cf1b44d563677b8dd7ffe1f730cea2916ea07e"
+  revision = "eae38c487ee2249f783756e1975edc9f7ed8c4b6"
 
 [[projects]]
   branch = "master"
@@ -59,11 +67,16 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:5882fd6308a59490651eee7fdc62cb8e7c17af700a3d0d6b7d1a93e846c283ee"
+  digest = "1:2c56bcc606865d755db01d0a975e17fab4876b874e6a88febd5a280e6d566fe0"
   name = "github.com/lock-free/obrero"
-  packages = ["."]
+  packages = [
+    ".",
+    "mids",
+    "napool",
+    "utils",
+  ]
   pruneopts = "UT"
-  revision = "813b62787f0535a0812d2bdebc381ee4ac8db5bb"
+  revision = "18ec4f3e2ea040542ff23bba713ac861092ac42a"
 
 [[projects]]
   digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
@@ -82,50 +95,47 @@
     "context/ctxhttp",
   ]
   pruneopts = "UT"
-  revision = "da137c7871d730100384dbcf36e6f8fa493aef5b"
+  revision = "a8b05e9114ab0cb08faec337c959aed24b68bf50"
 
 [[projects]]
   branch = "master"
-  digest = "1:31e33f76456ccf54819ab4a646cf01271d1a99d7712ab84bf1a9e7b61cd2031b"
+  digest = "1:8d1c112fb1679fa097e9a9255a786ee47383fa2549a3da71bcb1334a693ebcfe"
   name = "golang.org/x/oauth2"
   packages = [
     ".",
-    "google",
     "internal",
-    "jws",
-    "jwt",
   ]
   pruneopts = "UT"
   revision = "0f29369cfe4552d0e4bcddc57cc75f4d7e672a33"
 
 [[projects]]
-  digest = "1:498b722d33dde4471e7d6e5d88a5e7132d2a8306fea5ff5ee82d1f418b4f41ed"
+  digest = "1:6eb6e3b6d9fffb62958cf7f7d88dbbe1dd6839436b0802e194c590667a40412a"
   name = "google.golang.org/appengine"
   packages = [
-    ".",
     "internal",
-    "internal/app_identity",
     "internal/base",
     "internal/datastore",
     "internal/log",
-    "internal/modules",
     "internal/remote_api",
     "internal/urlfetch",
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "b2f4a3cf3c67576a2ee09e1fe62656a5086ce880"
-  version = "v1.6.1"
+  revision = "5f2a59506353b8d5ba8cbbcd9f3c1f41f1eaf079"
+  version = "v1.6.2"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
   input-imports = [
+    "github.com/lock-free/goklog",
     "github.com/lock-free/gopcp",
     "github.com/lock-free/gopcp_stream",
     "github.com/lock-free/obrero",
+    "github.com/lock-free/obrero/mids",
+    "github.com/lock-free/obrero/napool",
+    "github.com/lock-free/obrero/utils",
     "golang.org/x/oauth2",
-    "golang.org/x/oauth2/google",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
