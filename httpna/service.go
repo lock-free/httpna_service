@@ -39,50 +39,6 @@ type OAuthConf struct {
 	ServiceType      string
 }
 
-func ParseProxyCallExp(args []interface{}) (serviceType string, funName string, params []interface{}, timeout time.Duration, err error) {
-	var ok = true
-	var list []interface{}
-	var timeoutf float64
-
-	if len(args) < 3 {
-		ok = false
-	}
-
-	if ok {
-		serviceType, ok = args[0].(string)
-	}
-
-	if ok {
-		list, ok = args[1].([]interface{})
-	}
-
-	if ok {
-		params, ok = list[0].([]interface{})
-		if len(params) <= 0 {
-			ok = false
-		}
-	}
-
-	if ok {
-		timeoutf, ok = args[2].(float64)
-		if ok {
-			timeout = time.Duration(timeoutf) * time.Second
-		}
-	}
-
-	if ok {
-		funName, ok = params[0].(string)
-	}
-
-	if !ok {
-		err = getProxySignError(args)
-	} else {
-		params = params[1:]
-	}
-
-	return
-}
-
 // (download, serviceType, [funName, params...], downloadConfig, timeout)
 func ParseDownloadCallExp(args []interface{}) (serviceType string, funName string, params []interface{}, downloadConfig map[string]interface{}, timeout time.Duration, err error) {
 	var ok = true
