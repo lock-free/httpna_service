@@ -93,11 +93,11 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 			}
 
 			// 3. add user as first parameter to query private services
-			return pcpClient.ToJSON(gopcp.CallResult{append([]interface{}{arr[0], user}, arr[1:]...)})
+			return pcpClient.ToJSON(gopcp.CallResult{append([]interface{}{serviceType, arr[0], user}, arr[1:]...)})
 		}
 
 		if _, ok := httpNAConf.PUBLIC_WPS[serviceType]; ok {
-			return pcpClient.ToJSON(gopcp.CallResult{append([]interface{}{arr[0]}, arr[1:]...)})
+			return pcpClient.ToJSON(gopcp.CallResult{append([]interface{}{serviceType}, arr...)})
 		}
 
 		return "", errors.New("Try to access unexported worker")
@@ -108,9 +108,7 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 		// [proxy, serviceType, exp, timeout]
 		// 1. check it's public proxy or private proxy
 		// 2. for private proxy, need to call auth service
-		"proxy": gopcp.ToLazySandboxFun(
-			mids.LogMid("proxy", mid.FlushPcpFun(proxyMid.Proxy)),
-		),
+		"proxy": gopcp.ToLazySandboxFun(mids.LogMid("proxy", mid.FlushPcpFun(proxyMid.Proxy))),
 	}))
 
 	// http route
