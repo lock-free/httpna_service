@@ -1,7 +1,6 @@
 package mid
 
 import (
-	"bytes"
 	"encoding/json"
 	"github.com/lock-free/gopcp"
 	"net/http"
@@ -14,16 +13,8 @@ type PcpHttpResponse struct {
 	ErrMsg string      `json:"errMsg"`
 }
 
-func JSONMarshal(t interface{}) ([]byte, error) {
-	buffer := &bytes.Buffer{}
-	encoder := json.NewEncoder(buffer)
-	encoder.SetEscapeHTML(false)
-	err := encoder.Encode(t)
-	return buffer.Bytes(), err
-}
-
 func ResponseToBytes(pcpHttpRes PcpHttpResponse) []byte {
-	bytes, err := JSONMarshal(pcpHttpRes)
+	bytes, err := gopcp.JSONMarshal(pcpHttpRes)
 
 	if err != nil {
 		bytes, _ = json.Marshal(ErrorToResponse(err))
