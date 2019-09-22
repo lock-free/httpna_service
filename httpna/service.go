@@ -39,11 +39,6 @@ type OAuthConf struct {
 	ServiceType      string
 }
 
-func getUserFromAuthWp(sessionTxt string, naPools napool.NAPools, authWpName string, authMethod string, timeout time.Duration) (interface{}, error) {
-	pcpClient := gopcp.PcpClient{}
-	return naPools.CallProxy(authWpName, pcpClient.Call(authMethod, sessionTxt), timeout)
-}
-
 func Route(httpNAConf HTTPNAConf) napool.NAPools {
 	naPools := obrero.StartWorker(func(*gopcp_stream.StreamServer) *gopcp.Sandbox {
 		return gopcp.GetSandbox(map[string]*gopcp.BoxFunc{
@@ -73,9 +68,7 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 
 		// for private services, need to check user information
 		if _, ok := httpNAConf.PRIVATE_WPS[serviceType]; ok {
-			// 1. parse http cookie session information
-			sessionTxt, err := session.GetSession(httpAttachment.R, []byte(httpNAConf.SESSION_SECRECT_KEY), httpNAConf.SESSION_COOKIE_KEY)
-
+			cookie, err := httpAttachment.R.Cookie(httpNAConf.SESSION_COOKIE_KEY)
 			if err != nil {
 				return "", &mid.HttpError{
 					Errno:  403, // need login
@@ -83,8 +76,8 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 				}
 			}
 
-			// 2. validate session by AUTH application
-			user, err := getUserFromAuthWp(sessionTxt, naPools, httpNAConf.AUTH_WP_NAME, httpNAConf.AUTH_METHOD, timeoutD)
+			// get uid
+			uid, err := naPools.CallProxy("session_obrero", pcpClient.Call("getUidFromSessionText", cookie.Value, timeout), timeoutD)
 			if err != nil {
 				return "", &mid.HttpError{
 					Errno:  403, // need login
@@ -93,7 +86,7 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 			}
 
 			// 3. add user as first parameter to query private services
-			return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{append([]interface{}{arr[0], user}, arr[1:]...)}, timeout))
+			return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{append([]interface{}{arr[0], uid}, arr[1:]...)}, timeout))
 		}
 
 		if _, ok := httpNAConf.PUBLIC_WPS[serviceType]; ok {
