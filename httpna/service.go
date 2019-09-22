@@ -1,7 +1,6 @@
 package httpna
 
 import (
-	"errors"
 	"fmt"
 	"github.com/lock-free/goklog"
 	"github.com/lock-free/gopcp"
@@ -89,7 +88,7 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 			return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
 		}
 
-		return "", errors.New("Try to access unexported worker")
+		return "", fmt.Errorf("Try to access unexported worker: %s", serviceType)
 	})
 
 	// middleware for proxy http request to wp
