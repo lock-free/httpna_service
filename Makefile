@@ -17,7 +17,6 @@ run:
 	@go run main.go
 
 test:
-	@cd ./session && go test -v -race
 	@cd ./mid && go test -v -race
 	@cd ./httpna && go test -v -race
 

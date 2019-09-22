@@ -8,7 +8,6 @@ import (
 	"github.com/lock-free/gopcp_rpc"
 	"github.com/lock-free/gopcp_stream"
 	"github.com/lock-free/httpna_service/mid"
-	"github.com/lock-free/httpna_service/session"
 	"github.com/lock-free/obrero"
 	"github.com/lock-free/obrero/mids"
 	"github.com/lock-free/obrero/napool"
@@ -85,7 +84,7 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 				}
 			}
 
-			// 3. add user as first parameter to query private services
+			// add user as first parameter to query private services
 			return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{append([]interface{}{arr[0], uid}, arr[1:]...)}, timeout))
 		}
 
@@ -113,7 +112,14 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 
 	// logout
 	http.HandleFunc("/logout", func(w http.ResponseWriter, r *http.Request) {
-		session.RemoveSession(w, httpNAConf.SESSION_COOKIE_KEY, httpNAConf.SESSION_PATH)
+		// remove session from cookie
+		http.SetCookie(w, &http.Cookie{
+			Name:   httpNAConf.SESSION_COOKIE_KEY,
+			Value:  "placed",
+			Path:   httpNAConf.SESSION_PATH,
+			MaxAge: -1,
+		})
+
 		http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 	})
 

@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"github.com/lock-free/gopcp"
 	"github.com/lock-free/httpna_service/httpna"
-	"github.com/lock-free/httpna_service/session"
 	"github.com/lock-free/obrero/utils"
 	"log"
 	"net/http"
@@ -71,17 +70,23 @@ func main() {
 				return
 			}
 
-			err = session.SetSession(w,
-				[]byte(httpNAConf.SESSION_SECRECT_KEY),
-				httpNAConf.SESSION_COOKIE_KEY,
-				string(value),
-				httpNAConf.SESSION_PATH,
-				time.Duration(httpNAConf.SESSION_EXPIRE)*time.Second)
-
+			cypher, err := naPools.CallProxy("session_obrero", pcpClient.Call("encryptSession", string(value)), 120*time.Second)
 			if err != nil {
 				w.Write([]byte(err.Error()))
 				return
 			}
+			cypherText, ok := cypher.(string)
+			if !ok {
+				w.Write([]byte("unexpect type error for encryptSession"))
+				return
+			}
+
+			http.SetCookie(w, &http.Cookie{
+				Name:    httpNAConf.SESSION_COOKIE_KEY,
+				Value:   cypherText,
+				Path:    httpNAConf.SESSION_PATH,
+				Expires: time.Now().Add(time.Duration(httpNAConf.SESSION_EXPIRE) * time.Second),
+			})
 
 			http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 		})

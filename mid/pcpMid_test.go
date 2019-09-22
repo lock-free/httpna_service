@@ -17,20 +17,6 @@ func assertEqual(t *testing.T, expect interface{}, actual interface{}, message s
 	t.Fatal(message)
 }
 
-func TestJSONMarshal(t *testing.T) {
-	bytes, err := JSONMarshal(struct {
-		Title string
-		Count int
-	}{
-		"<b>hello</b>",
-		10,
-	})
-	if err != nil {
-		panic(err)
-	}
-	assertEqual(t, strings.TrimSpace(string(bytes)), `{"Title":"<b>hello</b>","Count":10}`, "")
-}
-
 func TestResponseToBytes(t *testing.T) {
 	bytes := ResponseToBytes(PcpHttpResponse{1, 123, "err"})
 	assertEqual(t, strings.TrimSpace(string(bytes)), `{"text":1,"errno":123,"errMsg":"err"}`, "")
