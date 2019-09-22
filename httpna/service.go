@@ -20,16 +20,13 @@ var klog = goklog.GetInstance()
 var pcpClient = gopcp.PcpClient{}
 
 type HTTPNAConf struct {
-	PORT                int
-	PRIVATE_WPS         map[string]bool
-	PUBLIC_WPS          map[string]bool
-	AUTH_WP_NAME        string
-	AUTH_METHOD         string
-	SESSION_COOKIE_KEY  string
-	SESSION_SECRECT_KEY string
-	SESSION_PATH        string
-	SESSION_EXPIRE      int
-	OAuth               []OAuthConf
+	PORT               int
+	PRIVATE_WPS        map[string]bool
+	PUBLIC_WPS         map[string]bool
+	SESSION_COOKIE_KEY string
+	SESSION_PATH       string
+	SESSION_EXPIRE     int
+	OAuth              []OAuthConf
 }
 
 type OAuthConf struct {
