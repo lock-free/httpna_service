@@ -6,9 +6,9 @@ import (
 	"github.com/lock-free/gopcp"
 	"github.com/lock-free/gopcp_rpc"
 	"github.com/lock-free/gopcp_stream"
-	"github.com/lock-free/httpna_service/mid"
 	"github.com/lock-free/obrero"
 	"github.com/lock-free/obrero/mids"
+	"github.com/lock-free/obrero/mids/httpmids"
 	"github.com/lock-free/obrero/napool"
 	"net/http"
 	"strconv"
@@ -51,7 +51,7 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 	var proxyMid = mids.GetProxyMid(func(serviceType string) (*gopcp_rpc.PCPConnectionHandler, error) {
 		return naPools.GetRandomItem()
 	}, func(exp interface{}, serviceType string, timeout int, attachment interface{}, pcpServer *gopcp.PcpServer) (string, error) {
-		httpAttachment := attachment.(mid.HttpAttachment)
+		httpAttachment := attachment.(httpmids.HttpAttachment)
 		var timeoutD = time.Duration(timeout) * time.Second
 
 		// to array
@@ -65,7 +65,7 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 		if _, ok := httpNAConf.PRIVATE_WPS[serviceType]; ok {
 			cookie, err := httpAttachment.R.Cookie(httpNAConf.SESSION_COOKIE_KEY)
 			if err != nil {
-				return "", &mid.HttpError{
+				return "", &httpmids.HttpError{
 					Errno:  403, // need login
 					ErrMsg: err.Error(),
 				}
@@ -74,7 +74,7 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 			// get uid
 			uid, err := naPools.CallProxy("session_obrero", pcpClient.Call("getUidFromSessionText", cookie.Value, timeout), timeoutD)
 			if err != nil {
-				return "", &mid.HttpError{
+				return "", &httpmids.HttpError{
 					Errno:  403, // need login
 					ErrMsg: err.Error(),
 				}
@@ -92,16 +92,16 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 	})
 
 	// middleware for proxy http request to wp
-	pcpMid := mid.GetPcpMid(gopcp.GetSandbox(map[string]*gopcp.BoxFunc{
+	pcpMid := httpmids.GetPcpMid(gopcp.GetSandbox(map[string]*gopcp.BoxFunc{
 		// [proxy, serviceType, exp, timeout]
 		// 1. check it's public proxy or private proxy
 		// 2. for private proxy, need to call auth service
-		"proxy": gopcp.ToLazySandboxFun(mids.LogMid("proxy", mid.FlushPcpFun(proxyMid.Proxy))),
+		"proxy": gopcp.ToLazySandboxFun(mids.LogMid("proxy", httpmids.FlushPcpFun(proxyMid.Proxy))),
 	}))
 
 	// http route
 	http.HandleFunc("/api/pcp", func(w http.ResponseWriter, r *http.Request) {
-		if _, err := pcpMid(w, r, mid.HttpAttachment{R: r, W: w}); err != nil {
+		if _, err := pcpMid(w, r, httpmids.HttpAttachment{R: r, W: w}); err != nil {
 			klog.LogError("pcp-mid", err)
 		}
 	})

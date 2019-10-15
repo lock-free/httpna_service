@@ -67,16 +67,17 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:8db515cc886b0d215fcc4377d545a5c623538294fdaa4792ed1178de2967ea3d"
+  digest = "1:2bfa522e8541794778a2556a1334b64111da7b98deaff2e07e80da49561e3f7e"
   name = "github.com/lock-free/obrero"
   packages = [
     ".",
     "mids",
+    "mids/httpmids",
     "napool",
     "utils",
   ]
   pruneopts = "UT"
-  revision = "dabf31f37e3197c7c2a8b041e02949d9411d82d0"
+  revision = "699df7cc947674c1ccbf51d402be0c2580e559de"
 
 [[projects]]
   digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
@@ -95,7 +96,7 @@
     "context/ctxhttp",
   ]
   pruneopts = "UT"
-  revision = "1a5e07d1ff72da30f660d3c95b312a20be31173c"
+  revision = "da9a3fd4c5820e74b24a6cb7fb438dc9b0dd377c"
 
 [[projects]]
   branch = "master"
@@ -121,8 +122,8 @@
     "urlfetch",
   ]
   pruneopts = "UT"
-  revision = "c71d63e301d75423acb410203c747cad31e9a5e7"
-  version = "v1.6.3"
+  revision = "971852bfffca25b069c31162ae8f247a3dba083b"
+  version = "v1.6.5"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -134,6 +135,7 @@
     "github.com/lock-free/gopcp_stream",
     "github.com/lock-free/obrero",
     "github.com/lock-free/obrero/mids",
+    "github.com/lock-free/obrero/mids/httpmids",
     "github.com/lock-free/obrero/napool",
     "github.com/lock-free/obrero/utils",
     "golang.org/x/oauth2",
