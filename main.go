@@ -31,6 +31,11 @@ func main() {
 	pcpClient := gopcp.PcpClient{}
 
 	// dynamic oauth middlewares
+	// oauth interactive protocol:
+	// (1) construct oauth url used to redirect to login page from front end
+	//     (constructOAuthUrl, host, CallbackEndPoint)
+	// (2) get user info from callback by oauth
+	//     (getUserInfo, host, url, CallbackEndPoint)
 	for _, oauthConf := range httpNAConf.OAuth {
 		http.HandleFunc(oauthConf.LoginEndPoint, func(w http.ResponseWriter, r *http.Request) {
 			// get callback host
