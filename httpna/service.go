@@ -32,6 +32,7 @@ type OAuthConf struct {
 	LoginEndPoint    string
 	CallbackEndPoint string
 	ServiceType      string
+	LoginType        string
 }
 
 func Route(httpNAConf HTTPNAConf) napool.NAPools {

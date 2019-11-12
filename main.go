@@ -69,7 +69,7 @@ func main() {
 					return
 				}
 
-				sessionUser := SessionUser{"google", user}
+				sessionUser := SessionUser{oauthConf.LoginType, user}
 				value, err := json.Marshal(sessionUser)
 				if err != nil {
 					w.Write([]byte(err.Error()))
