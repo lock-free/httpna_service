@@ -10,14 +10,6 @@
   version = "v1.0.1"
 
 [[projects]]
-  digest = "1:573ca21d3669500ff845bdebee890eb7fc7f0f50c59f2132f2a0c6b03d85086a"
-  name = "github.com/golang/protobuf"
-  packages = ["proto"]
-  pruneopts = "UT"
-  revision = "6c65a5562fc06764971b7c5d05c76c75e84bdbf7"
-  version = "v1.3.2"
-
-[[projects]]
   branch = "master"
   digest = "1:562fc7c45fb24cd6519f945e4a9a626455c871853ad0cb009908cf4269f9375a"
   name = "github.com/lock-free/goaio"
@@ -67,7 +59,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:2bfa522e8541794778a2556a1334b64111da7b98deaff2e07e80da49561e3f7e"
+  digest = "1:80199f3e6f0243443f5e42aca3523265ad05100bede45ebea985c60d82d88a52"
   name = "github.com/lock-free/obrero"
   packages = [
     ".",
@@ -77,7 +69,7 @@
     "utils",
   ]
   pruneopts = "UT"
-  revision = "699df7cc947674c1ccbf51d402be0c2580e559de"
+  revision = "d16c6f21bd675a977521492bf63925bbd13b7107"
 
 [[projects]]
   digest = "1:274f67cb6fed9588ea2521ecdac05a6d62a8c51c074c1fccc6a49a40ba80e925"
@@ -86,44 +78,6 @@
   pruneopts = "UT"
   revision = "f58768cc1a7a7e77a3bd49e98cdd21419399b6a3"
   version = "v1.2.0"
-
-[[projects]]
-  branch = "master"
-  digest = "1:f8b491a7c25030a895a0e579742d07136e6958e77ef2d46e769db8eec4e58fcd"
-  name = "golang.org/x/net"
-  packages = [
-    "context",
-    "context/ctxhttp",
-  ]
-  pruneopts = "UT"
-  revision = "da9a3fd4c5820e74b24a6cb7fb438dc9b0dd377c"
-
-[[projects]]
-  branch = "master"
-  digest = "1:8d1c112fb1679fa097e9a9255a786ee47383fa2549a3da71bcb1334a693ebcfe"
-  name = "golang.org/x/oauth2"
-  packages = [
-    ".",
-    "internal",
-  ]
-  pruneopts = "UT"
-  revision = "0f29369cfe4552d0e4bcddc57cc75f4d7e672a33"
-
-[[projects]]
-  digest = "1:e0a1881f9e0564bebdeac98c75e59f07acdde6ed3a5396e0e613eaad31194866"
-  name = "google.golang.org/appengine"
-  packages = [
-    "internal",
-    "internal/base",
-    "internal/datastore",
-    "internal/log",
-    "internal/remote_api",
-    "internal/urlfetch",
-    "urlfetch",
-  ]
-  pruneopts = "UT"
-  revision = "971852bfffca25b069c31162ae8f247a3dba083b"
-  version = "v1.6.5"
 
 [solve-meta]
   analyzer-name = "dep"
@@ -138,7 +92,6 @@
     "github.com/lock-free/obrero/mids/httpmids",
     "github.com/lock-free/obrero/napool",
     "github.com/lock-free/obrero/utils",
-    "golang.org/x/oauth2",
   ]
   solver-name = "gps-cdcl"
   solver-version = 1
