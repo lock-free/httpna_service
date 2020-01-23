@@ -17,6 +17,6 @@ test:
 	@cd ./httpna && go test -v -race
 
 build:
-	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o stage/bin/httpna_service .
+	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o stage/bin/service .
 
 .PHONY: test
