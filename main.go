@@ -39,6 +39,7 @@ type OAuthConf struct {
 }
 
 func Route(naPools *napool.NAPools, appConfig AppConfig) {
+	fmt.Println("register route")
 	var proxyMid = mids.GetProxyMid(func(serviceType string, workerId string) (*gopcp_rpc.PCPConnectionHandler, error) {
 		return naPools.GetRandomItem()
 	}, func(exp interface{}, serviceType string, timeout int, attachment interface{}, pcpServer *gopcp.PcpServer) (string, error) {
@@ -89,8 +90,6 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 		// 2. for private proxy, need to call auth service
 		"proxy": gopcp.ToLazySandboxFun(mids.LogMid("proxy", httpmids.FlushPcpFun(proxyMid.Proxy))),
 	}))
-
-	fmt.Println("register pcp handler")
 
 	// http route
 	http.HandleFunc("/api/pcp", func(w http.ResponseWriter, r *http.Request) {
