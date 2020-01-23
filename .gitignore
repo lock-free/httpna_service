@@ -16,3 +16,4 @@
 *.swo
 *.DS_Store
 vendor
+stage

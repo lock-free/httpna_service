@@ -49,7 +49,7 @@ func Route(httpNAConf HTTPNAConf) napool.NAPools {
 		NAGetClientMaxRetry: 3,
 	})
 
-	var proxyMid = mids.GetProxyMid(func(serviceType string) (*gopcp_rpc.PCPConnectionHandler, error) {
+	var proxyMid = mids.GetProxyMid(func(serviceType string, workerId string) (*gopcp_rpc.PCPConnectionHandler, error) {
 		return naPools.GetRandomItem()
 	}, func(exp interface{}, serviceType string, timeout int, attachment interface{}, pcpServer *gopcp.PcpServer) (string, error) {
 		httpAttachment := attachment.(httpmids.HttpAttachment)
