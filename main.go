@@ -39,7 +39,6 @@ type OAuthConf struct {
 }
 
 func Route(naPools *napool.NAPools, appConfig AppConfig) {
-	fmt.Println("register route")
 	var proxyMid = mids.GetProxyMid(func(serviceType string, workerId string) (*gopcp_rpc.PCPConnectionHandler, error) {
 		return naPools.GetRandomItem()
 	}, func(exp interface{}, serviceType string, timeout int, attachment interface{}, pcpServer *gopcp.PcpServer) (string, error) {
@@ -117,10 +116,7 @@ func main() {
 	var appConfig AppConfig
 
 	// connect NAs
-	stdserv.StartStdWorker(&appConfig, nil, func(naPools *napool.NAPools, workerState *stdserv.WorkerState, s *gopcp_stream.StreamServer) map[string]*gopcp.BoxFunc {
-		Route(naPools, appConfig)
-		OAuthMids(naPools, appConfig)
-
+	naPools := stdserv.StartStdWorker(&appConfig, nil, func(naPools *napool.NAPools, workerState *stdserv.WorkerState, s *gopcp_stream.StreamServer) map[string]*gopcp.BoxFunc {
 		return map[string]*gopcp.BoxFunc{
 			"getServiceType": gopcp.ToSandboxFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
 				return "httpna", nil
@@ -131,6 +127,11 @@ func main() {
 		Nonblocking: true,
 	})
 
+	// mids
+	Route(&naPools, appConfig)
+	OAuthMids(&naPools, appConfig)
+
+	// start server
 	klog.LogNormal("start-service", "try to start tcp server at "+strconv.Itoa(appConfig.PORT))
 	err := http.ListenAndServe(":"+strconv.Itoa(appConfig.PORT), nil)
 	if err != nil {
