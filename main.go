@@ -90,6 +90,8 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 		"proxy": gopcp.ToLazySandboxFun(mids.LogMid("proxy", httpmids.FlushPcpFun(proxyMid.Proxy))),
 	}))
 
+	fmt.Println("register pcp handler")
+
 	// http route
 	http.HandleFunc("/api/pcp", func(w http.ResponseWriter, r *http.Request) {
 		if _, err := pcpMid(w, r, httpmids.HttpAttachment{R: r, W: w}); err != nil {
