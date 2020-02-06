@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/lock-free/obrero/napool"
 	"log"
 	"net/http"
@@ -30,7 +31,7 @@ func OAuthMids(naPools *napool.NAPools, appConfig AppConfig) {
 
 				url, ok := v.(string)
 				if !ok {
-					w.Write([]byte("unexpected worker error: url is not string"))
+					w.Write([]byte(fmt.Sprintf("unexpected worker error: url is not string, url is %v", url)))
 					return
 				}
 				log.Printf("login redict url is: %s", url)
