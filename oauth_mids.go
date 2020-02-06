@@ -19,6 +19,9 @@ func OAuthMids(naPools *napool.NAPools, appConfig AppConfig) {
 	for _, oauthConf := range appConfig.OAuth {
 		func(oauthConf OAuthConf) {
 			http.HandleFunc(oauthConf.LoginEndPoint, func(w http.ResponseWriter, r *http.Request) {
+				klog.LogNormal("oauth-end",
+					fmt.Sprintf("login end point=%s, serviceType=%s\n", oauthConf.LoginEndPoint, oauthConf.ServiceType))
+
 				// get callback host
 				host := GetRedirectHost(r)
 				v, err := naPools.CallProxy(oauthConf.ServiceType,
