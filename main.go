@@ -83,9 +83,9 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 			fmt.Println("!!!!!!!!!!!!!")
 			fmt.Println(uid)
 			// green light for admins
-			if _, ok := appConfig.Admins[uid]; ok {
-				return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
-			}
+			// if _, ok := appConfig.Admins[uid]; ok {
+			// 	return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
+			// }
 
 			// for private services, need to check user information
 			if _, ok := appConfig.PRIVATE_WPS[serviceType]; ok {
