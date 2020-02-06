@@ -51,7 +51,7 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 		jsonObj := gopcp.ParseAstToJsonObject(exp)
 		arr, ok := jsonObj.([]interface{})
 		if !ok || len(arr) == 0 {
-			return "", fmt.Errorf("Expect none-empty array, but got %v", jsonObj)
+			return "", fmt.Errorf("Expect none-empty array, but got %v, exp is %v", jsonObj, exp)
 		}
 
 		// for public service
