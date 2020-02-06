@@ -32,6 +32,8 @@ github.com/lock-free/obrero v0.0.0-20200123052628-9a49107aff9e h1:jzKNLhH602tHsf
 github.com/lock-free/obrero v0.0.0-20200123052628-9a49107aff9e/go.mod h1:8PSHPDdZv7npRASHNFZe1+L/1Hs464Tye50rbGxv0xU=
 github.com/lock-free/obrero v0.0.0-20200206060641-71246fc24de4 h1:Ti2sZYaGHQAv45Rr6O7iMh0owL3i63gfY+rVLzQ/LPE=
 github.com/lock-free/obrero v0.0.0-20200206060641-71246fc24de4/go.mod h1:8PSHPDdZv7npRASHNFZe1+L/1Hs464Tye50rbGxv0xU=
+github.com/lock-free/obrero v0.0.0-20200206060840-3ba8914aa691 h1:T0HLYS6nDMbQji6B/T3uyihKDLhNnEDVD3+fe/aFLww=
+github.com/lock-free/obrero v0.0.0-20200206060840-3ba8914aa691/go.mod h1:8PSHPDdZv7npRASHNFZe1+L/1Hs464Tye50rbGxv0xU=
 github.com/satori/go.uuid v1.2.0 h1:0uYX9dsZ2yD7q2RtLRtPSdGDWzjeM3TbMJP9utgA0ww=
 github.com/satori/go.uuid v1.2.0/go.mod h1:dA0hQrYB0VpLJoorglMZABFdXlWrHn1NEOzdhQKdks0=
 gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 h1:YR8cESwS4TdDjEe65xsg0ogRM/Nc3DYOhEAlW+xobZo=
