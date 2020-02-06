@@ -10,6 +10,7 @@ import (
 	"github.com/lock-free/obrero/mids/httpmids"
 	"github.com/lock-free/obrero/napool"
 	"github.com/lock-free/obrero/stdserv"
+	"github.com/lock-free/obrero/utils"
 	"net/http"
 	"strconv"
 	"time"
@@ -23,6 +24,7 @@ const CONFIG_FILE_PATH = "/data/app.json"
 
 type AppConfig struct {
 	PORT               int
+	Admins             map[string]interface{}
 	PRIVATE_WPS        map[string]bool
 	PUBLIC_WPS         map[string]bool
 	SESSION_COOKIE_KEY string
@@ -52,8 +54,10 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 			return "", fmt.Errorf("Expect none-empty array, but got %v", jsonObj)
 		}
 
-		// for private services, need to check user information
-		if _, ok := appConfig.PRIVATE_WPS[serviceType]; ok {
+		// for public service
+		if _, ok := appConfig.PUBLIC_WPS[serviceType]; ok {
+			return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
+		} else {
 			cookie, err := httpAttachment.R.Cookie(appConfig.SESSION_COOKIE_KEY)
 			if err != nil {
 				return "", &httpmids.HttpError{
@@ -63,20 +67,31 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 			}
 
 			// get uid
-			uid, err := naPools.CallProxy("session_obrero", pcpClient.Call("getUidFromSessionText", cookie.Value, timeout), timeoutD)
+			var uid string
+			uidInterface, err := naPools.CallProxy("session_obrero", pcpClient.Call("getUidFromSessionText", cookie.Value, timeout), timeoutD)
 			if err != nil {
 				return "", &httpmids.HttpError{
 					Errno:  403, // need login
 					ErrMsg: err.Error(),
 				}
 			}
+			err = utils.ParseArg(uidInterface, &uid)
+			if err != nil {
+				return "", err
+			}
 
-			// add user as first parameter to query private services
-			return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{append([]interface{}{arr[0], uid}, arr[1:]...)}, timeout))
-		}
+			fmt.Println("!!!!!!!!!!!!!")
+			fmt.Println(uid)
+			// green light for admins
+			if _, ok := appConfig.Admins[uid]; ok {
+				return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
+			}
 
-		if _, ok := appConfig.PUBLIC_WPS[serviceType]; ok {
-			return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
+			// for private services, need to check user information
+			if _, ok := appConfig.PRIVATE_WPS[serviceType]; ok {
+				// add user as first parameter to query private services
+				return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{append([]interface{}{arr[0], uid}, arr[1:]...)}, timeout))
+			}
 		}
 
 		return "", fmt.Errorf("Try to access unexported worker: %s", serviceType)
