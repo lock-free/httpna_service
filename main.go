@@ -129,13 +129,15 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 	}
 
 	var proxyMid = mids.GetProxyMid(getWorkerHandler, getCommand)
+	var proxyAdminMid = mids.GetProxyMid(getWorkerHandler, getAdminCommand)
 
 	// middleware for proxy http request to wp
 	pcpMid := httpmids.GetPcpMid(gopcp.GetSandbox(map[string]*gopcp.BoxFunc{
 		// [proxy, serviceType, exp, timeout]
 		// 1. check it's public proxy or private proxy
 		// 2. for private proxy, need to call auth service
-		"proxy": gopcp.ToLazySandboxFun(mids.LogMid("proxy", httpmids.FlushPcpFun(proxyMid.Proxy))),
+		"proxy":      gopcp.ToLazySandboxFun(mids.LogMid("proxy", httpmids.FlushPcpFun(proxyMid.Proxy))),
+		"proxyAdmin": gopcp.ToLazySandboxFun(mids.LogMid("proxyAdmin", httpmids.FlushPcpFun(proxyAdminMid.Proxy))),
 	}))
 
 	// http route
