@@ -24,7 +24,7 @@ const CONFIG_FILE_PATH = "/data/app.json"
 
 type AppConfig struct {
 	PORT               int
-	Admins             map[string]interface{}
+	Admins             map[string]bool
 	PRIVATE_WPS        map[string]bool
 	PUBLIC_WPS         map[string]bool
 	SESSION_COOKIE_KEY string
@@ -123,9 +123,14 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 			return "", err
 		}
 
-		klog.LogNormal("admin-pcp", uid)
 		// TODO admin checking
-		return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
+
+		if _, ok := appConfig.Admins[uid]; ok {
+			klog.LogNormal("admin-pcp", uid)
+			return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
+		}
+
+		return "", fmt.Errorf("user is not admin %s", uid)
 	}
 
 	var proxyMid = mids.GetProxyMid(getWorkerHandler, getCommand)
