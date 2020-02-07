@@ -40,52 +40,65 @@ type OAuthConf struct {
 	LoginType        string
 }
 
+func getUid(naPools *napool.NAPools, appConfig *AppConfig, httpAttachment httpmids.HttpAttachment, timeout int) (string, error) {
+
+	var timeoutD = time.Duration(timeout) * time.Second
+	cookie, err := httpAttachment.R.Cookie(appConfig.SESSION_COOKIE_KEY)
+	if err != nil {
+		return "", &httpmids.HttpError{
+			Errno:  403, // need login
+			ErrMsg: err.Error(),
+		}
+	}
+
+	// get uid
+	var uid string
+	uidInterface, err := naPools.CallProxy("session_obrero", pcpClient.Call("getUidFromSessionText", cookie.Value, timeout), timeoutD)
+	if err != nil {
+		return "", &httpmids.HttpError{
+			Errno:  403, // need login
+			ErrMsg: err.Error(),
+		}
+	}
+	err = utils.ParseArg(uidInterface, &uid)
+	if err != nil {
+		return "", err
+	}
+
+	return uid, err
+}
+
+func getExpAsArr(exp gopcp.FunNode) ([]interface{}, error) {
+	jsonObj := gopcp.ParseAstToJsonObject(exp)
+	arr, ok := jsonObj.([]interface{})
+	if !ok || len(arr) == 0 {
+		return nil, fmt.Errorf("Expect none-empty array, but got %v, exp is %v", jsonObj, exp)
+	}
+	return arr, nil
+}
+
 func Route(naPools *napool.NAPools, appConfig AppConfig) {
-	var proxyMid = mids.GetProxyMid(func(serviceType string, workerId string) (*gopcp_rpc.PCPConnectionHandler, error) {
+	var getWorkerHandler = func(serviceType string, workerId string) (*gopcp_rpc.PCPConnectionHandler, error) {
 		return naPools.GetRandomItem()
-	}, func(exp gopcp.FunNode, serviceType string, timeout int, attachment interface{}, pcpServer *gopcp.PcpServer) (string, error) {
+	}
+
+	var getCommand = func(exp gopcp.FunNode, serviceType string, timeout int, attachment interface{}, pcpServer *gopcp.PcpServer) (string, error) {
 		httpAttachment := attachment.(httpmids.HttpAttachment)
-		var timeoutD = time.Duration(timeout) * time.Second
 
 		// to array
-		jsonObj := gopcp.ParseAstToJsonObject(exp)
-		arr, ok := jsonObj.([]interface{})
-		if !ok || len(arr) == 0 {
-			return "", fmt.Errorf("Expect none-empty array, but got %v, exp is %v", jsonObj, exp)
+		arr, err := getExpAsArr(exp)
+		if err != nil {
+			return "", err
 		}
 
 		// for public service
 		if _, ok := appConfig.PUBLIC_WPS[serviceType]; ok {
 			return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
 		} else {
-			cookie, err := httpAttachment.R.Cookie(appConfig.SESSION_COOKIE_KEY)
-			if err != nil {
-				return "", &httpmids.HttpError{
-					Errno:  403, // need login
-					ErrMsg: err.Error(),
-				}
-			}
-
-			// get uid
-			var uid string
-			uidInterface, err := naPools.CallProxy("session_obrero", pcpClient.Call("getUidFromSessionText", cookie.Value, timeout), timeoutD)
-			if err != nil {
-				return "", &httpmids.HttpError{
-					Errno:  403, // need login
-					ErrMsg: err.Error(),
-				}
-			}
-			err = utils.ParseArg(uidInterface, &uid)
+			uid, err := getUid(naPools, &appConfig, httpAttachment, timeout)
 			if err != nil {
 				return "", err
 			}
-
-			fmt.Println("!!!!!!!!!!!!!")
-			fmt.Println(uid)
-			// green light for admins
-			// if _, ok := appConfig.Admins[uid]; ok {
-			// 	return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
-			// }
 
 			// for private services, need to check user information
 			if _, ok := appConfig.PRIVATE_WPS[serviceType]; ok {
@@ -95,7 +108,9 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 		}
 
 		return "", fmt.Errorf("Try to access unexported worker: %s", serviceType)
-	})
+	}
+
+	var proxyMid = mids.GetProxyMid(getWorkerHandler, getCommand)
 
 	// middleware for proxy http request to wp
 	pcpMid := httpmids.GetPcpMid(gopcp.GetSandbox(map[string]*gopcp.BoxFunc{
