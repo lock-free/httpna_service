@@ -110,6 +110,24 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 		return "", fmt.Errorf("Try to access unexported worker: %s", serviceType)
 	}
 
+	var getAdminCommand = func(exp gopcp.FunNode, serviceType string, timeout int, attachment interface{}, pcpServer *gopcp.PcpServer) (string, error) {
+		httpAttachment := attachment.(httpmids.HttpAttachment)
+
+		// to array
+		arr, err := getExpAsArr(exp)
+		if err != nil {
+			return "", err
+		}
+		uid, err := getUid(naPools, &appConfig, httpAttachment, timeout)
+		if err != nil {
+			return "", err
+		}
+
+		klog.LogNormal("admin-pcp", uid)
+		// TODO admin checking
+		return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
+	}
+
 	var proxyMid = mids.GetProxyMid(getWorkerHandler, getCommand)
 
 	// middleware for proxy http request to wp
