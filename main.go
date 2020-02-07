@@ -123,8 +123,6 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 			return "", err
 		}
 
-		// TODO admin checking
-
 		if _, ok := appConfig.Admins[uid]; ok {
 			klog.LogNormal("admin-pcp", uid)
 			return pcpClient.ToJSON(pcpClient.Call("proxy", serviceType, gopcp.CallResult{arr}, timeout))
