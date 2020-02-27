@@ -136,6 +136,24 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 
 	// middleware for proxy http request to wp
 	pcpMid := httpmids.GetPcpMid(gopcp.GetSandbox(map[string]*gopcp.BoxFunc{
+		// ddki user
+		"login_ddki": mids.LogMid("login_ddki", gopcp.ToSandboxFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) {
+			var (
+				username string
+				password string
+			)
+			httpAttachment := attachment.(httpmids.HttpAttachment)
+			err := utils.ParseArgs(args, []interface{}{&username, &password}, "wrong signature, expect (username, password: String)")
+			if err != nil {
+				return nil, err
+			}
+
+			// validate username, password combination. (username, password) -> uid
+
+			// get user from app.ddki.users by uid
+
+			// write auth token to clients
+		})),
 		// [proxy, serviceType, exp, timeout]
 		// 1. check it's public proxy or private proxy
 		// 2. for private proxy, need to call auth service

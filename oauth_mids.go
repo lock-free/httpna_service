@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/lock-free/obrero/napool"
 	"log"
@@ -53,34 +54,42 @@ func OAuthMids(naPools *napool.NAPools, appConfig AppConfig) {
 				}
 
 				sessionUser := SessionUser{oauthConf.LoginType, user}
-				value, err := json.Marshal(sessionUser)
+
+				err = SetAuthTokenToClient(naPools, w, appConfig, sessionUser)
 				if err != nil {
 					w.Write([]byte(err.Error()))
 					return
 				}
-
-				cypher, err := naPools.CallProxy("session_obrero", pcpClient.Call("encryptSession", string(value)), 120*time.Second)
-				if err != nil {
-					w.Write([]byte(err.Error()))
-					return
-				}
-				cypherText, ok := cypher.(string)
-				if !ok {
-					w.Write([]byte("unexpect type error for encryptSession"))
-					return
-				}
-
-				http.SetCookie(w, &http.Cookie{
-					Name:    appConfig.SESSION_COOKIE_KEY,
-					Value:   cypherText,
-					Path:    appConfig.SESSION_PATH,
-					Expires: time.Now().Add(time.Duration(appConfig.SESSION_EXPIRE) * time.Second),
-				})
 
 				http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			})
 		}(oauthConf)
 	}
+}
+
+func SetAuthTokenToClient(naPools *napool.NAPools, w http.ResponseWriter, appConfig AppConfig, sessionUser SessionUser) error {
+	value, err := json.Marshal(sessionUser)
+	if err != nil {
+		return err
+	}
+
+	cypher, err := naPools.CallProxy("session_obrero", pcpClient.Call("encryptSession", string(value)), 120*time.Second)
+	if err != nil {
+		return err
+	}
+	cypherText, ok := cypher.(string)
+	if !ok {
+		return errors.New("unexpect type error for encryptSession")
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:    appConfig.SESSION_COOKIE_KEY,
+		Value:   cypherText,
+		Path:    appConfig.SESSION_PATH,
+		Expires: time.Now().Add(time.Duration(appConfig.SESSION_EXPIRE) * time.Second),
+	})
+
+	return nil
 }
 
 // pass redirect host from front-end
