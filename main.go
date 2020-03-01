@@ -148,7 +148,7 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 		"proxyAdmin": gopcp.ToLazySandboxFun(mids.LogMid("proxyAdmin", httpmids.FlushPcpFun(proxyAdminMid.Proxy))),
 
 		// loginByUserPass(name string, password string)
-		"loginByUserPass": gopcp.ToSandboxFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
+		"loginByUserPass": gopcp.ToSandboxFun(mids.LogMid("loginByUserPass", func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
 			var (
 				name     string
 				password string
@@ -188,7 +188,7 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 			}
 
 			return entityIndexValue, nil
-		}),
+		})),
 	}))
 
 	// http route
