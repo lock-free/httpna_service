@@ -77,6 +77,11 @@ func getExpAsArr(exp gopcp.FunNode) ([]interface{}, error) {
 	return arr, nil
 }
 
+type EntityIndexValue struct {
+	EntityId string `json:"entityId"`
+	UpdateAt int64  `json:"update_at"`
+}
+
 func Route(naPools *napool.NAPools, appConfig AppConfig) {
 	var getWorkerHandler = func(serviceType string, workerId string) (*gopcp_rpc.PCPConnectionHandler, error) {
 		return naPools.GetRandomItem()
@@ -141,6 +146,48 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 		// 2. for private proxy, need to call auth service
 		"proxy":      gopcp.ToLazySandboxFun(mids.LogMid("proxy", httpmids.FlushPcpFun(proxyMid.Proxy))),
 		"proxyAdmin": gopcp.ToLazySandboxFun(mids.LogMid("proxyAdmin", httpmids.FlushPcpFun(proxyAdminMid.Proxy))),
+
+		// loginByUserPass(name string, password string)
+		"loginByUserPass": gopcp.ToSandboxFun(func(args []interface{}, attachment interface{}, pcpServer *gopcp.PcpServer) (interface{}, error) {
+			var (
+				name     string
+				password string
+			)
+			err = utils.ParseArgs(args, []interface{}{&name, &password}, "wrong signature, expect loginByUserPass(name string, password string)")
+			if err != nil {
+				return nil, err
+			}
+
+			// get user Id
+			v, err := naPools.CallProxy("model_obrero",
+				pcpClient.Call("getIdByCompundMapIndex",
+					"app_ddki_user_pass_map_index",
+					[]interface{}{name, password},
+					120), 120*time.Second)
+			if err != nil {
+				return nil, err
+			}
+
+			if v == nil { // no such user
+				return nil, nil
+			}
+
+			var entityIndexValue EntityIndexValue
+			err = utils.ParseArg(v, &entityIndexValue)
+			if err != nil {
+				return err
+			}
+
+			// write to cookie
+			err = SetAuthToken(naPools, appConfig, "userPass", map[string]string{
+				"id": entityIndexValue.EntityId,
+			})
+			if err != nil {
+				return err
+			}
+
+			return entityIndexValue, nil
+		}),
 	}))
 
 	// http route
