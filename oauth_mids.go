@@ -54,8 +54,10 @@ func OAuthMids(naPools *napool.NAPools, appConfig AppConfig) {
 				}
 
 				err = SetAuthToken(naPools, w, appConfig, oauthConf.LoginType, user)
-				w.Write([]byte(err.Error()))
-				return
+				if err != nil {
+					w.Write([]byte(err.Error()))
+					return
+				}
 
 				http.Redirect(w, r, "/", http.StatusTemporaryRedirect)
 			})
