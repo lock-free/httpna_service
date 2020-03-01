@@ -153,11 +153,12 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 				name     string
 				password string
 			)
-			err = utils.ParseArgs(args, []interface{}{&name, &password}, "wrong signature, expect loginByUserPass(name string, password string)")
+			err := utils.ParseArgs(args, []interface{}{&name, &password}, "wrong signature, expect loginByUserPass(name string, password string)")
 			if err != nil {
 				return nil, err
 			}
 
+			httpAttachment := attachment.(httpmids.HttpAttachment)
 			// get user Id
 			v, err := naPools.CallProxy("model_obrero",
 				pcpClient.Call("getIdByCompundMapIndex",
@@ -175,15 +176,15 @@ func Route(naPools *napool.NAPools, appConfig AppConfig) {
 			var entityIndexValue EntityIndexValue
 			err = utils.ParseArg(v, &entityIndexValue)
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			// write to cookie
-			err = SetAuthToken(naPools, appConfig, "userPass", map[string]string{
+			err = SetAuthToken(naPools, httpAttachment.W, appConfig, "userPass", map[string]string{
 				"id": entityIndexValue.EntityId,
 			})
 			if err != nil {
-				return err
+				return nil, err
 			}
 
 			return entityIndexValue, nil

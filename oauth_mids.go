@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/lock-free/obrero/napool"
 	"log"
@@ -52,7 +53,7 @@ func OAuthMids(naPools *napool.NAPools, appConfig AppConfig) {
 					return
 				}
 
-				err := SetAuthToken(naPools, appConfig, oauthConf.LoginType, user)
+				err = SetAuthToken(naPools, w, appConfig, oauthConf.LoginType, user)
 				w.Write([]byte(err.Error()))
 				return
 
@@ -62,7 +63,7 @@ func OAuthMids(naPools *napool.NAPools, appConfig AppConfig) {
 	}
 }
 
-func SetAuthToken(naPools *napool.NAPools, appConfig AppConfig, loginType string, user interface{}) error {
+func SetAuthToken(naPools *napool.NAPools, w http.ResponseWriter, appConfig AppConfig, loginType string, user interface{}) error {
 	sessionUser := SessionUser{loginType, user}
 	value, err := json.Marshal(sessionUser)
 	if err != nil {
@@ -84,6 +85,7 @@ func SetAuthToken(naPools *napool.NAPools, appConfig AppConfig, loginType string
 		Path:    appConfig.SESSION_PATH,
 		Expires: time.Now().Add(time.Duration(appConfig.SESSION_EXPIRE) * time.Second),
 	})
+
 	return nil
 }
 
