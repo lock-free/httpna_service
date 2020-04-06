@@ -31,6 +31,7 @@ type AppConfig struct {
 	SESSION_PATH       string
 	SESSION_EXPIRE     int
 	OAuth              []OAuthConf
+	WebHooks           []WebHookConf
 }
 
 type OAuthConf struct {
@@ -38,6 +39,12 @@ type OAuthConf struct {
 	CallbackEndPoint string
 	ServiceType      string
 	LoginType        string
+}
+
+type WebHookConf struct {
+	WebHookEndPoint string
+	ServiceType     string
+	FunName         string
 }
 
 func getUid(naPools *napool.NAPools, appConfig *AppConfig, httpAttachment httpmids.HttpAttachment, timeout int) (string, error) {
@@ -224,13 +231,14 @@ func main() {
 			}),
 		}
 	}, stdserv.StdWorkerConfig{
-		ServiceName: "ddki_app",
+		ServiceName: "httpna",
 		Nonblocking: true,
 	})
 
 	// mids
 	Route(&naPools, appConfig)
 	OAuthMids(&naPools, appConfig)
+	WebHookMids(&naPools, appConfig)
 
 	// start server
 	klog.LogNormal("start-service", "try to start tcp server at "+strconv.Itoa(appConfig.PORT))
